@@ -3,158 +3,152 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Website Agent</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<title>Charmly 💖</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  /* Global Styles */
-  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; transition: background 0.3s, color 0.3s; }
-  body { background: var(--bg-color); color: var(--text-color); line-height: 1.6; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; }
-
-  /* Color Variables */
-  :root {
-    --bg-color: #f7f9fc;
-    --text-color: #333;
-    --accent-color: #0b3d91;
-    --card-bg: #fff;
-    --card-shadow: rgba(0,0,0,0.05);
-  }
-  body.dark { 
-    --bg-color: #121212;
-    --text-color: #eee;
-    --accent-color: #4f8ef7;
-    --card-bg: #1e1e1e;
-    --card-shadow: rgba(0,0,0,0.4);
-  }
-
-  /* Header */
-  h1 { font-size: 2.5rem; margin-bottom: 10px; color: var(--accent-color); text-align: center; }
-  h2 { font-size: 1.5rem; margin: 30px 0 10px; color: var(--accent-color); text-align: center; }
-
-  /* Container */
-  .container { width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 15px; }
-
-  /* Textarea */
-  textarea { width: 100%; height: 120px; padding: 15px; border-radius: 12px; border: 1px solid #ccc; font-size: 1rem; resize: vertical; box-shadow: 0 4px 12px var(--card-shadow); background: var(--card-bg); color: var(--text-color); }
-  textarea:focus { border-color: var(--accent-color); box-shadow: 0 6px 20px rgba(11,61,145,0.2); outline: none; }
-
-  /* Button */
-  button { padding: 12px 25px; font-size: 1.1rem; border-radius: 12px; border: none; background: var(--accent-color); color: #fff; cursor: pointer; align-self: flex-start; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(11,61,145,0.3); }
-  button:hover { background: #0e4fbf; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(11,61,145,0.4); }
-
-  /* Response Box */
-  pre { background: var(--card-bg); padding: 15px; border-radius: 12px; max-height: 400px; overflow-y: auto; box-shadow: 0 4px 12px var(--card-shadow); white-space: pre-wrap; }
-
-  /* Features / Gallery */
-  .features, .carousel { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-top: 40px; width: 100%; }
-  .feature-box, .carousel-item { background: var(--card-bg); padding: 20px; border-radius: 15px; text-align: center; box-shadow: 0 6px 18px var(--card-shadow); transition: all 0.3s ease; }
-  .feature-box:hover, .carousel-item:hover { transform: translateY(-5px); box-shadow: 0 10px 25px var(--card-shadow); }
-  .feature-box h3, .carousel-item h3 { margin-bottom: 10px; color: var(--accent-color); }
-  .feature-box p, .carousel-item p { font-size: 0.95rem; color: var(--text-color); }
-
-  /* Dark Mode Toggle */
-  #theme-toggle { position: fixed; top: 20px; right: 20px; padding: 10px 15px; border-radius: 12px; background: var(--accent-color); color: #fff; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(11,61,145,0.3); transition: all 0.3s; }
-  #theme-toggle:hover { transform: translateY(-2px); background: #0e4fbf; }
-
-  /* Typing Effect */
-  .typing { border-right: 2px solid var(--accent-color); white-space: pre-wrap; overflow-wrap: break-word; }
-
-  /* Carousel scroll */
-  .carousel-container { overflow-x: auto; display: flex; gap: 15px; padding-bottom: 10px; }
+  body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
+  .animate-upload { animation: bounce 1s infinite; display: inline-block; }
+  @keyframes bounce { 0%,100%{ transform: translateY(0);} 50%{ transform: translateY(-5px); } }
+  .hero-gradient { background: linear-gradient(135deg, #8b5cf6, #ec4899, #f97316); }
+  .fade-in { opacity: 0; transform: translateY(20px); transition: all 0.7s ease-in-out; }
+  .fade-in.visible { opacity: 1; transform: translateY(0); }
+  a.nav-link:hover { color: #8b5cf6; transition: color 0.3s; }
 </style>
 </head>
-<body>
+<body class="bg-gray-50">
 
-<button id="theme-toggle">Toggle Dark Mode</button>
-
-<h1>AI Website Builder Agent</h1>
-<div class="container">
-  <textarea id="prompt" placeholder="Describe your website..."></textarea>
-  <button id="generate">Generate</button>
-</div>
-
-<h2>AI Response:</h2>
-<pre id="response"></pre>
-
-<!-- Feature Boxes -->
-<div class="features">
-  <div class="feature-box">
-    <h3>Responsive Design</h3>
-    <p>Looks great on all devices — mobile, tablet, desktop.</p>
+<!-- Header -->
+<header class="sticky top-0 backdrop-blur bg-white/70 shadow-md z-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+    <div class="flex items-center space-x-2 font-bold text-purple-600 text-lg">
+      <span>💖</span>
+      <span>Charmly</span>
+    </div>
+    <nav class="hidden md:flex space-x-6 text-gray-700 font-medium">
+      <a href="#community" class="nav-link">Community</a>
+      <a href="#pricing" class="nav-link">Pricing</a>
+      <a href="#enterprise" class="nav-link">Enterprise</a>
+      <a href="#learn" class="nav-link">Learn</a>
+      <a href="#launched" class="nav-link">Launched</a>
+    </nav>
+    <div class="flex items-center space-x-4">
+      <span class="text-lg cursor-pointer">🔍</span>
+      <span class="text-lg cursor-pointer">🌙</span>
+      <span class="text-lg cursor-pointer">👤</span>
+      <div class="flex items-center space-x-2">
+        <img src="https://via.placeholder.com/32" alt="Profile" class="w-8 h-8 rounded-full">
+        <span class="text-sm font-medium">USERNAME's the cool name you picked (Charmly)</span>
+      </div>
+    </div>
   </div>
-  <div class="feature-box">
-    <h3>Clean Code</h3>
-    <p>Generated HTML, CSS, and JS is neat and editable.</p>
-  </div>
-  <div class="feature-box">
-    <h3>Modern UI</h3>
-    <p>Rounded corners, shadows, hover effects, smooth transitions.</p>
-  </div>
-  <div class="feature-box">
-    <h3>Interactive Elements</h3>
-    <p>Buttons, galleries, and dynamic content included.</p>
-  </div>
-</div>
+</header>
 
-<h2>Gallery of AI Previews:</h2>
-<div class="carousel-container" id="carousel"></div>
+<!-- Hero -->
+<main class="hero-gradient text-white py-24 relative overflow-hidden">
+  <div class="max-w-4xl mx-auto px-4 text-center space-y-6 fade-in">
+    <h1 class="text-5xl md:text-6xl font-extrabold">Build something 💖 Charmly</h1>
+    <p class="text-xl md:text-2xl font-medium">Create apps, websites, or cool names by chatting with AI</p>
 
-<script src="script.js"></script>
+    <!-- Floating AI Input -->
+    <div class="mt-8 relative w-full max-w-3xl mx-auto">
+      <div class="flex items-center bg-white rounded-full shadow-lg px-4 py-3 space-x-3 text-gray-600">
+        <span class="text-xl cursor-pointer">+</span>
+        <span class="text-xl cursor-pointer">📎</span>
+        <span class="text-xl cursor-pointer">🌐</span>
+        <span class="text-xl cursor-pointer">🔗</span>
+        <input type="text" id="prompt" placeholder="Ask Charmly to create something..." class="flex-1 focus:outline-none text-gray-700">
+        <span class="text-xl cursor-pointer animate-upload">⬆️</span>
+      </div>
+      <button id="generate" class="absolute right-3 top-3 bg-purple-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-purple-700 transition">Generate</button>
+    </div>
+  </div>
+</main>
+
+<!-- Features -->
+<section class="features max-w-7xl mx-auto px-4 py-24 grid grid-cols-1 md:grid-cols-4 gap-8 fade-in">
+  <div class="feature-box bg-white rounded-xl shadow-lg p-6 text-center hover:scale-105 transition">
+    <h3 class="text-purple-600 font-bold mb-2">Responsive Design</h3>
+    <p class="text-gray-700 text-sm">Looks great on all devices.</p>
+  </div>
+  <div class="feature-box bg-white rounded-xl shadow-lg p-6 text-center hover:scale-105 transition">
+    <h3 class="text-purple-600 font-bold mb-2">Clean Code</h3>
+    <p class="text-gray-700 text-sm">Generated HTML, CSS, JS is editable.</p>
+  </div>
+  <div class="feature-box bg-white rounded-xl shadow-lg p-6 text-center hover:scale-105 transition">
+    <h3 class="text-purple-600 font-bold mb-2">Interactive Elements</h3>
+    <p class="text-gray-700 text-sm">Buttons, hover effects, animations.</p>
+  </div>
+  <div class="feature-box bg-white rounded-xl shadow-lg p-6 text-center hover:scale-105 transition">
+    <h3 class="text-purple-600 font-bold mb-2">Instant Preview</h3>
+    <p class="text-gray-700 text-sm">See your creations live instantly.</p>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-gray-100 text-gray-700 mt-20 py-12 fade-in">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-5 gap-8">
+    <div class="flex items-center space-x-2 text-purple-600 font-bold text-lg">
+      <span>💖</span>
+      <span>Charmly</span>
+    </div>
+    <div>
+      <h3 class="font-semibold mb-3">Company</h3>
+      <ul class="space-y-2 text-sm">
+        <li><a href="#" class="hover:text-purple-600 transition">About</a></li>
+        <li><a href="#" class="hover:text-purple-600 transition">Careers</a></li>
+        <li><a href="#" class="hover:text-purple-600 transition">Blog</a></li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="font-semibold mb-3">Product</h3>
+      <ul class="space-y-2 text-sm">
+        <li><a href="#" class="hover:text-purple-600 transition">Features</a></li>
+        <li><a href="#" class="hover:text-purple-600 transition">Integrations</a></li>
+        <li><a href="#" class="hover:text-purple-600 transition">Pricing</a></li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="font-semibold mb-3">Resources</h3>
+      <ul class="space-y-2 text-sm">
+        <li><a href="#" class="hover:text-purple-600 transition">Docs</a></li>
+        <li><a href="#" class="hover:text-purple-600 transition">Guides</a></li>
+        <li><a href="#" class="hover:text-purple-600 transition">Tutorials</a></li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="font-semibold mb-3">Community</h3>
+      <ul class="space-y-2 text-sm">
+        <li><a href="#" class="hover:text-purple-600 transition">Forum</a></li>
+        <li><a href="#" class="hover:text-purple-600 transition">Events</a></li>
+        <li><a href="#" class="hover:text-purple-600 transition">Support</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="mt-12 text-sm text-gray-500 text-center">&copy; EN</div>
+</footer>
+
 <script>
-  const responseBox = document.getElementById("response");
-  const carousel = document.getElementById("carousel");
+  // Scroll fade-in
+  const faders = document.querySelectorAll('.fade-in');
+  const appearOptions = { threshold: 0.1, rootMargin: "0px 0px -50px 0px" };
+  const appearOnScroll = new IntersectionObserver(function(entries, observer){
+    entries.forEach(entry => { if(entry.isIntersecting){ entry.target.classList.add('visible'); observer.unobserve(entry.target); } });
+  }, appearOptions);
+  faders.forEach(fader => appearOnScroll.observe(fader));
 
-  // Dark Mode Toggle
-  const themeToggle = document.getElementById("theme-toggle");
-  themeToggle.addEventListener("click", () => {
-    document.body.classList.toggle("dark");
+  // Dark mode toggle
+  document.querySelector('span.text-lg.cursor-pointer:nth-child(2)').addEventListener('click', () => {
+    document.body.classList.toggle('dark');
   });
 
-  // Typing Effect
-  async function typeEffect(element, text) {
-    element.textContent = "";
-    element.classList.add("typing");
-    for (let i = 0; i < text.length; i++) {
-      element.textContent += text[i];
-      await new Promise(r => setTimeout(r, 15)); // typing speed
-    }
-    element.classList.remove("typing");
-  }
-
-  // AI Generate Button
-  document.getElementById("generate").addEventListener("click", async () => {
-    const prompt = document.getElementById("prompt").value.trim();
-    if (!prompt) { responseBox.textContent = "Please enter a description."; return; }
-
-    // Clear previous carousel items
-    carousel.innerHTML = "";
-
-    responseBox.textContent = "Generating AI response...";
-    try {
-      const res = await fetch("/api/ai-generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
-      });
-      const data = await res.json();
-      const aiText = data.output || "No response from AI.";
-
-      // Animate typing
-      await typeEffect(responseBox, aiText);
-
-      // Split into previews for gallery (simulate multiple previews)
-      const previews = aiText.split("\n\n").filter(p => p.trim().length > 20).slice(0,5);
-      previews.forEach(preview => {
-        const item = document.createElement("div");
-        item.className = "carousel-item";
-        item.innerHTML = `<h3>Preview</h3><p>${preview}</p>`;
-        carousel.appendChild(item);
-      });
-
-    } catch (err) {
-      console.error(err);
-      responseBox.textContent = "Error fetching AI response.";
-    }
+  // Floating AI input (dummy action)
+  document.getElementById('generate').addEventListener('click', () => {
+    const input = document.getElementById('prompt').value.trim();
+    if(!input) return alert("Please type something!");
+    alert(`Charmly is generating something for: "${input}"`);
   });
 </script>
+
 </body>
 </html>
