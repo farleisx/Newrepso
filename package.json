@@ -1,0 +1,11 @@
+{
+  "name": "ai-website-agent-gemini",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "vercel dev"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.11.4"
+  }
+}
