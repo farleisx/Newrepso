@@ -1,8 +1,6 @@
-import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -15,15 +13,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    const completion = await client.chat.completions.create({
-      model: "gpt-4o-mini", // cheaper + fast, good for coding
-      messages: [
-        { role: "system", content: "You are an AI website builder agent. Generate HTML, CSS, and JS code based on user descriptions." },
-        { role: "user", content: prompt },
-      ],
-    });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    const output = completion.choices[0].message.content;
+    const result = await model.generateContent(
+      `You are an AI website builder agent. Generate clean HTML, CSS, and JS code based on this request:\n\n${prompt}`
+    );
+
+    const output = result.response.text();
     res.status(200).json({ output });
   } catch (err) {
     console.error(err);
