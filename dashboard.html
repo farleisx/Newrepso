@@ -4,154 +4,122 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Charmly Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-body { margin:0; font-family:'Inter',sans-serif; display:flex; height:100vh; overflow:hidden; background:#f7f9fc; }
-body.dark { background:#121212; color:#eee; }
-.sidebar { width:35%; min-width:300px; background:#fff; border-right:1px solid #ddd; display:flex; flex-direction:column; padding:20px; overflow-y:auto; }
-.sidebar.dark { background:#1e1e1e; border-color:#333; }
-.prompt-box { display:flex; margin-bottom:15px; gap:10px; }
-.prompt-box textarea { flex:1; height:80px; border-radius:10px; padding:10px; border:1px solid #ccc; resize:none; font-size:1rem; }
-.prompt-box button { padding:10px 20px; border:none; border-radius:10px; background:#0b3d91; color:#fff; cursor:pointer; }
-.prompt-box button:hover { background:#0e4fbf; }
-.chat { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
-.message { padding:10px; border-radius:10px; background:#f0f0f0; }
-.message.ai { background:#d9f0ff; }
-.message.dark { background:#2a2a2a; }
-.preview { flex:1; background:#fff; border-left:1px solid #ddd; }
-.preview.dark { background:#1a1a1a; border-color:#333; }
-#livePreview { width:100%; height:100%; border:none; }
-#themeToggle { position:fixed; top:20px; right:20px; padding:10px 15px; border-radius:10px; background:#0b3d91; color:#fff; border:none; cursor:pointer; }
-#themeToggle:hover { background:#0e4fbf; }
-button.approve, button.reject { padding:5px 10px; border:none; border-radius:6px; cursor:pointer; margin-right:5px; }
-button.approve { background:#0b3d91; color:#fff; }
-button.approve:hover { background:#0e4fbf; }
-button.reject { background:#ccc; color:#000; }
-button.reject:hover { background:#999; }
+  body, html { margin:0; padding:0; height:100%; font-family:'Inter',sans-serif; display:flex; overflow:hidden; }
+  .chat-container { width:35%; border-right:1px solid #ddd; display:flex; flex-direction:column; background:#f9f9f9; }
+  .chat-messages { flex:1; overflow-y:auto; padding:15px; display:flex; flex-direction:column; gap:10px; }
+  .chat-message { padding:10px 15px; border-radius:12px; max-width:80%; }
+  .chat-user { background:#0b3d91; color:white; align-self:flex-end; }
+  .chat-ai { background:#e2e2e2; color:#333; align-self:flex-start; white-space:pre-wrap; }
+  .chat-input { padding:10px; border-top:1px solid #ccc; display:flex; gap:10px; }
+  .chat-input input { flex:1; padding:10px 15px; border-radius:12px; border:1px solid #ccc; font-size:1rem; }
+  .chat-input button { padding:10px 20px; border:none; border-radius:12px; background:#0b3d91; color:white; cursor:pointer; }
+  .approve-buttons { margin-top:5px; display:flex; gap:10px; }
+  .approve-buttons button { padding:5px 10px; border-radius:8px; border:none; cursor:pointer; }
+  .approve { background:#4caf50; color:white; }
+  .reject { background:#f44336; color:white; }
+
+  .preview-container { flex:1; background:#fff; }
+  iframe { width:100%; height:100%; border:none; }
+
+  .typing { border-right:2px solid #0b3d91; }
 </style>
 </head>
 <body>
 
-<div class="sidebar" id="sidebar">
-  <div class="prompt-box">
-    <textarea id="prompt" placeholder="Describe your website..."></textarea>
-    <button id="generate">Send</button>
+<div class="chat-container">
+  <div class="chat-messages" id="chat"></div>
+  <div class="chat-input">
+    <input type="text" id="userInput" placeholder="Type your request...">
+    <button id="sendBtn">Send</button>
   </div>
-  <div class="chat" id="chat"></div>
 </div>
 
-<div class="preview" id="preview">
+<div class="preview-container">
   <iframe id="livePreview"></iframe>
 </div>
 
-<button id="themeToggle">Toggle Dark Mode</button>
-
 <script>
-const promptEl = document.getElementById('prompt');
-const generateBtn = document.getElementById('generate');
 const chatEl = document.getElementById('chat');
-const liveIframe = document.getElementById('livePreview');
-const themeToggle = document.getElementById('themeToggle');
-const body = document.body;
-const sidebar = document.getElementById('sidebar');
-const preview = document.getElementById('preview');
+const inputEl = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
+const livePreview = document.getElementById('livePreview');
 
-let pendingUpdate = null;
-
-// Dark Mode
-themeToggle.addEventListener('click', ()=> {
-  body.classList.toggle('dark');
-  sidebar.classList.toggle('dark');
-  preview.classList.toggle('dark');
-  document.querySelectorAll('.message').forEach(msg=>msg.classList.toggle('dark'));
-});
-
-// Load prompt from landing page
-const savedPrompt = localStorage.getItem('ai-prompt');
-if(savedPrompt) promptEl.value = savedPrompt;
-
-// Typing Effect
-async function typeEffect(el,text){
-  el.textContent="";
-  for(let i=0;i<text.length;i++){
-    el.textContent+=text[i];
-    await new Promise(r=>setTimeout(r,15));
-  }
-}
-
-// Add message to chat
-function addMessage(text,ai=false){
+function addMessage(text, sender='ai', html=false){
   const div = document.createElement('div');
-  div.className='message'+(ai?' ai':'');
-  div.textContent = text;
+  div.className = 'chat-message ' + (sender==='ai'?'chat-ai':'chat-user');
+  if(html) div.innerHTML = text;
+  else div.textContent = text;
   chatEl.appendChild(div);
   chatEl.scrollTop = chatEl.scrollHeight;
   return div;
 }
 
-// Parse AI response & update live preview
-function updateLivePreview(aiText){
-  const htmlMatch = aiText.match(/\*\*index\.html:\*\*\s*```html([\s\S]*?)```/);
-  const cssMatch = aiText.match(/\*\*style\.css:\*\*\s*```css([\s\S]*?)```/);
-  const jsMatch = aiText.match(/\*\*script\.js:\*\*\s*```javascript([\s\S]*?)```/);
-
-  const htmlCode = htmlMatch ? htmlMatch[1].trim() : `<h1>Preview Not Available</h1>`;
-  const cssCode = cssMatch ? `<style>${cssMatch[1].trim()}</style>` : '';
-  const jsCode = jsMatch ? `<script>${jsMatch[1].trim()}<\/script>` : '';
-
-  liveIframe.srcdoc = htmlCode + cssCode + jsCode;
+// Typing effect
+async function typeEffect(element, text){
+  element.textContent = '';
+  element.classList.add('typing');
+  for(let i=0;i<text.length;i++){
+    element.textContent += text[i];
+    await new Promise(r=>setTimeout(r,15));
+  }
+  element.classList.remove('typing');
 }
 
-// Approval buttons
-function addApprovalButtons(parentDiv, aiText){
-  const btnContainer = document.createElement('div');
-  btnContainer.style.marginTop='10px';
-  btnContainer.style.display='flex';
-  
+// Simulate extracting “diff” from AI full output
+function extractDiff(fullHTML){
+  // Remove <html>, <body>, <head> wrappers
+  let diff = fullHTML.replace(/<html[\s\S]*?>|<\/html>/gi,'')
+                     .replace(/<head[\s\S]*?>[\s\S]*?<\/head>/gi,'')
+                     .replace(/<body[\s\S]*?>|<\/body>/gi,'').trim();
+  // Show only additions like <img>, <script>, <style> tags
+  const additions = diff.match(/<img[\s\S]*?>|<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi);
+  return additions ? additions.join('\n') : 'I added the main structure. You can now add images, sounds, etc.';
+}
+
+// Approve / Reject buttons
+function addApprovalButtons(parentDiv, fullHTML){
+  const container = document.createElement('div');
+  container.className = 'approve-buttons';
   const approveBtn = document.createElement('button');
-  approveBtn.className='approve';
-  approveBtn.textContent='Approve';
-
+  approveBtn.className = 'approve';
+  approveBtn.textContent = 'Approve';
+  approveBtn.onclick = ()=>{ alert('Changes approved!'); };
   const rejectBtn = document.createElement('button');
-  rejectBtn.className='reject';
-  rejectBtn.textContent='Reject';
-
-  btnContainer.appendChild(approveBtn);
-  btnContainer.appendChild(rejectBtn);
-  parentDiv.appendChild(btnContainer);
-
-  approveBtn.addEventListener('click', ()=>{
-    updateLivePreview(aiText);
-    btnContainer.remove();
-    pendingUpdate = null;
-  });
-  rejectBtn.addEventListener('click', ()=>{
-    btnContainer.remove();
-    pendingUpdate = null;
-  });
+  rejectBtn.className = 'reject';
+  rejectBtn.textContent = 'Reject';
+  rejectBtn.onclick = ()=>{ alert('Changes rejected!'); };
+  container.appendChild(approveBtn);
+  container.appendChild(rejectBtn);
+  parentDiv.appendChild(container);
 }
 
-// Generate / follow-up
-generateBtn.addEventListener('click', async ()=>{
-  const prompt = promptEl.value.trim();
-  if(!prompt) return alert("Please enter a description");
+// Handle sending
+sendBtn.addEventListener('click', async ()=>{
+  const userText = inputEl.value.trim();
+  if(!userText) return;
+  addMessage(userText,'user');
+  inputEl.value='';
 
-  addMessage(prompt,false); // user message
-  const aiMsg = addMessage("Generating AI response...",true); // placeholder
-
+  const aiMsg = addMessage("Generating AI response...");
   try{
     const res = await fetch('/api/ai-generate',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({prompt})
+      body: JSON.stringify({prompt:userText})
     });
     const data = await res.json();
-    const aiText = data.output||"No response from AI.";
+    const fullAIOutput = data.output || "<h2>No output</h2>";
 
-    await typeEffect(aiMsg, aiText);
+    // Update live preview with full AI HTML
+    livePreview.srcdoc = fullAIOutput;
 
-    pendingUpdate = aiText;
-    addApprovalButtons(aiMsg, aiText);
+    // Show only diff in chat with typing effect
+    const diffText = extractDiff(fullAIOutput);
+    await typeEffect(aiMsg, diffText);
+
+    addApprovalButtons(aiMsg, fullAIOutput);
 
   }catch(err){
     console.error(err);
@@ -159,11 +127,11 @@ generateBtn.addEventListener('click', async ()=>{
   }
 });
 
-// Auto-send if coming from landing page
-if(savedPrompt){
-  generateBtn.click();
-  localStorage.removeItem('ai-prompt');
-}
+// Enter key support
+inputEl.addEventListener('keydown', e=>{
+  if(e.key==='Enter') sendBtn.click();
+});
 </script>
+
 </body>
 </html>
