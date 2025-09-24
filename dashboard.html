@@ -6,152 +6,145 @@
 <title>Charmly Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  body { margin:0; font-family:'Inter', sans-serif; display:flex; height:100vh; overflow:hidden; background:#f7f9fc; }
-  body.dark { background:#121212; color:#eee; }
-  
+  * { box-sizing: border-box; margin:0; padding:0; font-family:'Inter',sans-serif; transition: background 0.3s, color 0.3s; }
+  body { display: flex; height:100vh; overflow:hidden; background: var(--bg-color); color: var(--text-color); }
+  :root {
+    --bg-color:#f7f9fc;
+    --text-color:#333;
+    --accent:#0b3d91;
+    --card-bg:#fff;
+    --card-shadow:rgba(0,0,0,0.05);
+  }
+  body.dark {
+    --bg-color:#121212;
+    --text-color:#eee;
+    --accent:#4f8ef7;
+    --card-bg:#1e1e1e;
+    --card-shadow:rgba(0,0,0,0.4);
+  }
+
   /* Sidebar */
-  #sidebar { width:25%; min-width:300px; background:#fff; display:flex; flex-direction:column; justify-content:space-between; border-right:1px solid #ddd; }
-  body.dark #sidebar { background:#1e1e1e; border-color:#444; }
-  #project-info { padding:20px; border-bottom:1px solid #ddd; }
-  body.dark #project-info { border-color:#444; }
-  #chat { flex:1; padding:10px; overflow-y:auto; display:flex; flex-direction:column-reverse; }
-  #chat-input { display:flex; padding:10px; border-top:1px solid #ddd; }
-  body.dark #chat-input { border-color:#444; }
-  #chat-input input { flex:1; padding:10px; border-radius:8px; border:1px solid #ccc; margin-right:8px; }
-  #chat-input button { padding:10px 15px; background:#0b3d91; color:#fff; border:none; border-radius:8px; cursor:pointer; }
-  #chat-input button:hover { background:#0e4fbf; }
+  #sidebar { width:25%; background:var(--card-bg); display:flex; flex-direction:column; border-right:1px solid #ccc; }
+  #chat-area { flex:1; overflow-y:auto; padding:10px; }
+  #chat-area p { margin-bottom:10px; }
+  #input-area { display:flex; padding:10px; border-top:1px solid #ccc; }
+  #prompt { flex:1; padding:8px; border-radius:8px; border:1px solid #ccc; }
+  #send-btn { margin-left:8px; padding:8px 12px; background:var(--accent); color:#fff; border:none; border-radius:8px; cursor:pointer; }
 
-  /* Right live preview */
-  #preview-container { flex:1; display:flex; flex-direction:column; }
-  #preview-header { height:50px; padding:10px; border-bottom:1px solid #ddd; display:flex; justify-content:flex-end; align-items:center; background:#f1f1f1; }
-  body.dark #preview-header { background:#1e1e1e; border-color:#444; }
-  #preview { flex:1; border:none; }
+  /* Main preview */
+  #main { flex:1; display:flex; flex-direction:column; }
+  #top-bar { height:50px; background:var(--card-bg); border-bottom:1px solid #ccc; display:flex; align-items:center; justify-content:space-between; padding:0 20px; }
+  #iframe-container { flex:1; }
+  iframe { width:100%; height:100%; border:none; }
 
-  /* Chat bubbles */
-  .ai-msg { background:#0b3d91; color:#fff; padding:8px 12px; border-radius:12px; margin-bottom:8px; align-self:flex-start; max-width:90%; white-space:pre-wrap; }
-  body.dark .ai-msg { background:#4f8ef7; }
-  .user-msg { background:#eee; color:#333; padding:8px 12px; border-radius:12px; margin-bottom:8px; align-self:flex-end; max-width:90%; }
-  body.dark .user-msg { background:#333; color:#eee; }
-
-  /* Approve / Reject buttons */
-  .action-buttons { margin-top:5px; display:flex; gap:5px; }
-  .action-buttons button { padding:5px 10px; border:none; border-radius:6px; cursor:pointer; }
-  .approve { background:green;color:white; }
-  .reject { background:red;color:white; }
+  /* Dark mode toggle */
+  #theme-toggle { position:fixed; top:15px; right:15px; padding:6px 12px; border:none; border-radius:8px; background:var(--accent); color:#fff; cursor:pointer; }
 
 </style>
 </head>
 <body>
 
 <div id="sidebar">
-  <div>
-    <div id="project-info">
-      <h3 id="project-title">Loading project...</h3>
-      <p id="project-status">Initializing...</p>
-    </div>
-    <div id="chat"></div>
+  <div id="chat-area">
+    <p><strong>AI Suggestions:</strong></p>
   </div>
-  <div id="chat-input">
-    <input type="text" id="user-input" placeholder="Ask Charmly to add/change something...">
+  <div id="input-area">
+    <input type="text" id="prompt" placeholder="Ask Charmly...">
     <button id="send-btn">Send</button>
   </div>
 </div>
 
-<div id="preview-container">
-  <div id="preview-header">
-    <button id="toggle-theme">Toggle Dark</button>
+<div id="main">
+  <div id="top-bar">
+    <div id="project-name">Project: <span id="proj-title"></span></div>
+    <div>
+      <button id="approve-btn">Approve Plan</button>
+      <button id="reject-btn">Reject</button>
+    </div>
   </div>
-  <iframe id="preview"></iframe>
+  <div id="iframe-container">
+    <iframe id="live-preview"></iframe>
+  </div>
 </div>
 
+<button id="theme-toggle">Dark Mode</button>
+
 <script>
-const chat = document.getElementById("chat");
-const preview = document.getElementById("preview");
-const sendBtn = document.getElementById("send-btn");
-const userInput = document.getElementById("user-input");
-const toggleTheme = document.getElementById("toggle-theme");
-const body = document.body;
+  const chatArea = document.getElementById("chat-area");
+  const promptInput = document.getElementById("prompt");
+  const sendBtn = document.getElementById("send-btn");
+  const livePreview = document.getElementById("live-preview");
+  const projTitle = document.getElementById("proj-title");
+  const approveBtn = document.getElementById("approve-btn");
+  const rejectBtn = document.getElementById("reject-btn");
+  const themeToggle = document.getElementById("theme-toggle");
 
-// Get the prompt from localStorage
-const initialPrompt = localStorage.getItem("ai-prompt") || "Make a sample website";
-document.getElementById("project-title").innerText = initialPrompt;
-document.getElementById("project-status").innerText = "Generating initial preview...";
+  // Load prompt from index.html
+  const savedPrompt = localStorage.getItem("ai-prompt") || "Your project";
+  projTitle.textContent = savedPrompt;
 
-// Helper to show AI messages in chat
-function addAIMessage(msg, htmlContent=null){
-  const bubble = document.createElement("div");
-  bubble.className = "ai-msg";
-  bubble.innerText = msg;
+  themeToggle.addEventListener("click", () => document.body.classList.toggle("dark"));
 
-  // Add approve/reject buttons if HTML content is provided
-  if(htmlContent){
-    const btns = document.createElement("div");
-    btns.className = "action-buttons";
-
-    const approve = document.createElement("button");
-    approve.className = "approve";
-    approve.innerText = "Approve";
-    approve.onclick = ()=>{ preview.srcdoc = htmlContent; bubble.remove(); };
-
-    const reject = document.createElement("button");
-    reject.className = "reject";
-    reject.innerText = "Reject";
-    reject.onclick = ()=>{ bubble.remove(); };
-
-    btns.appendChild(approve);
-    btns.appendChild(reject);
-    bubble.appendChild(document.createElement("br"));
-    bubble.appendChild(btns);
+  function appendChat(message) {
+    const p = document.createElement("p");
+    p.textContent = message;
+    chatArea.appendChild(p);
+    chatArea.scrollTop = chatArea.scrollHeight;
   }
 
-  chat.prepend(bubble);
-}
+  async function sendPrompt(prompt) {
+    appendChat("You: " + prompt);
+    appendChat("AI: Generating...");
 
-// Simulate extraction of essential additions (images/scripts/styles)
-function extractDiff(fullHTML){
-  let essential="";
-  // Extract <style>, <script>, <img> tags
-  const styleMatches = fullHTML.match(/<style[\s\S]*?<\/style>/gi);
-  const scriptMatches = fullHTML.match(/<script[\s\S]*?<\/script>/gi);
-  const imgMatches = fullHTML.match(/<img[\s\S]*?>/gi);
-  if(styleMatches) essential+=styleMatches.join("\n")+"\n";
-  if(scriptMatches) essential+=scriptMatches.join("\n")+"\n";
-  if(imgMatches) essential+=imgMatches.join("\n")+"\n";
-  return essential || "Essential additions only.";
-}
+    // Call your backend API
+    try {
+      const res = await fetch("/api/ai-generate", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ prompt })
+      });
+      const data = await res.json();
+      const aiText = data.output || "AI did not return any output.";
 
-// Function to call AI backend
-async function callAI(prompt){
-  const res = await fetch("/api/ai-generate",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({prompt})
+      // Show only suggestions in chat
+      appendChat("AI suggests: Add images, sounds, or scripts. Key changes only.");
+
+      // Extract <style>, <script>, <img> only
+      const styleMatch = aiText.match(/```css([\s\S]*?)```/);
+      const jsMatch = aiText.match(/```javascript([\s\S]*?)```/);
+      const htmlMatch = aiText.match(/```html([\s\S]*?)```/);
+
+      const iframeDoc = livePreview.contentDocument || livePreview.contentWindow.document;
+      iframeDoc.open();
+      iframeDoc.write(`
+        <html>
+          <head>
+            <style>${styleMatch ? styleMatch[1] : ""}</style>
+          </head>
+          <body>
+            ${htmlMatch ? htmlMatch[1] : ""}
+            <script>${jsMatch ? jsMatch[1] : ""}<\/script>
+          </body>
+        </html>
+      `);
+      iframeDoc.close();
+
+    } catch(err) {
+      console.error(err);
+      appendChat("Error fetching AI response.");
+    }
+  }
+
+  sendBtn.addEventListener("click", () => {
+    const prompt = promptInput.value.trim();
+    if(!prompt) return alert("Enter a prompt!");
+    sendPrompt(prompt);
+    promptInput.value = "";
   });
-  const data = await res.json();
-  const htmlContent = data.output || "<p>No preview</p>";
 
-  addAIMessage("Charmly generated essential additions. Approve to update live preview.", htmlContent);
-}
-
-// Initial AI generation
-callAI(initialPrompt);
-
-// Handle user input
-sendBtn.addEventListener("click", ()=>{
-  const prompt = userInput.value.trim();
-  if(!prompt) return;
-  // Add user message
-  const bubble = document.createElement("div");
-  bubble.className="user-msg";
-  bubble.innerText = prompt;
-  chat.prepend(bubble);
-  userInput.value="";
-  callAI(prompt);
-});
-
-// Dark toggle
-toggleTheme.addEventListener("click", ()=>{ body.classList.toggle("dark"); });
-
+  // Approve/Reject buttons
+  approveBtn.addEventListener("click", () => appendChat("Plan approved! AI will continue."));
+  rejectBtn.addEventListener("click", () => appendChat("Plan rejected. Modify and resend."));
 </script>
 
 </body>
