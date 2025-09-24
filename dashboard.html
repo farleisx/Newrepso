@@ -6,178 +6,164 @@
 <title>Charmly Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-body, html { margin:0; padding:0; font-family:'Inter',sans-serif; height:100%; overflow:hidden; background:#f5f5f7; }
-header { height:50px; display:flex; justify-content:space-between; align-items:center; padding:0 20px; background:#fff; border-bottom:1px solid #ddd; flex-shrink:0; }
-header .left-btn { font-weight:600; }
-header .right-buttons button { margin-left:10px; padding:6px 15px; border-radius:8px; border:none; cursor:pointer; font-weight:600; }
-header .right-buttons .upgrade { background:#0b3d91; color:white; }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif;}
+  body{display:flex;height:100vh;overflow:hidden;background:#f7f9fc;}
+  body.dark{background:#121212;color:#eee;}
 
-.dashboard { display:flex; height:calc(100% - 50px); }
-.sidebar { width:25%; background:#fff; border-right:1px solid #ddd; display:flex; flex-direction:column; justify-content:space-between; }
-.sidebar-top { padding:20px; }
-.project-name { display:flex; align-items:center; gap:8px; font-weight:600; margin-bottom:10px; }
-.status { font-size:0.9rem; color:#888; display:flex; align-items:center; gap:5px; }
-.sidebar-top-icons { display:flex; gap:10px; margin-top:10px; font-size:1.2rem; cursor:pointer; }
-.sidebar-bottom { padding:15px; border-top:1px solid #eee; display:flex; flex-direction:column; gap:10px; }
-.chat-title { font-weight:500; margin-bottom:5px; }
-.chat-input { display:flex; gap:5px; }
-.chat-input input { flex:1; padding:8px 12px; border-radius:8px; border:1px solid #ccc; }
-.chat-icons { display:flex; gap:5px; margin-top:5px; }
-.chat-icons span { cursor:pointer; font-size:1.2rem; }
+  /* Left sidebar */
+  #sidebar{width:25%;background:#fff;border-right:1px solid #ddd;display:flex;flex-direction:column;}
+  #project-info{padding:20px;border-bottom:1px solid #ddd;}
+  #chat{flex:1;display:flex;flex-direction:column;padding:10px;overflow-y:auto;}
+  .message{background:#eef2ff;margin:5px 0;padding:8px 12px;border-radius:12px;box-shadow:0 2px 5px rgba(0,0,0,0.1);}
+  .message.ai{background:#d1fae5;align-self:flex-start;}
+  .message.user{background:#c7d2fe;align-self:flex-end;}
+  .message button{margin-left:5px;padding:2px 6px;border:none;border-radius:6px;cursor:pointer;}
+  #input-container{display:flex;padding:10px;border-top:1px solid #ddd;}
+  #input-container input{flex:1;padding:8px 12px;border-radius:12px;border:1px solid #ccc;}
+  #input-container button{margin-left:8px;padding:8px 12px;border:none;border-radius:12px;background:#4f46e5;color:#fff;cursor:pointer;}
 
-.main { flex:1; display:flex; flex-direction:column; padding:20px; overflow:hidden; }
-.preview { flex:1; display:flex; justify-content:center; align-items:center; background:#eaeaea; border-radius:12px; margin-bottom:15px; position:relative; }
-.preview iframe { width:100%; height:100%; border:none; border-radius:12px; }
-.placeholder { display:flex; flex-direction:column; align-items:center; color:#888; font-size:1.2rem; }
-.features { display:flex; gap:15px; }
-.feature { display:flex; align-items:center; gap:10px; background:#fff; padding:10px 15px; border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.05); flex:1; }
-.feature span { font-size:1.2rem; }
+  /* Top bar */
+  #topbar{position:fixed;top:0;left:25%;width:75%;height:50px;background:#fff;border-bottom:1px solid #ddd;display:flex;justify-content:space-between;align-items:center;padding:0 20px;z-index:50;}
+  #topbar button{margin-left:10px;padding:6px 12px;border:none;border-radius:8px;cursor:pointer;}
+  #topbar .highlight{background:#4f46e5;color:#fff;}
+
+  /* Main content */
+  #main{margin-top:50px;margin-left:25%;width:75%;flex:1;display:flex;flex-direction:column;}
+  #preview-container{flex:1;background:#fff;display:flex;justify-content:center;align-items:center;position:relative;overflow:auto;}
+  #preview{width:100%;height:100%;border:none;}
+
+  /* Features */
+  #features{display:flex;justify-content:space-around;padding:10px;background:#f0f4ff;border-top:1px solid #ddd;}
+
+  /* Typing effect */
+  .typing{border-right:2px solid #4f46e5;white-space:pre-wrap;overflow-wrap:break-word;}
 </style>
 </head>
 <body>
 
-<header>
-  <div class="left-btn">make a flappy bird game</div>
-  <div class="right-buttons">
+<!-- Left Sidebar -->
+<div id="sidebar">
+  <div id="project-info">
+    <h2>bird-bop-bonanza 💖</h2>
+    <p id="status">Loading Live Preview...</p>
+  </div>
+  <div id="chat"></div>
+  <div id="input-container">
+    <input type="text" id="chat-input" placeholder="Ask Charmly to change something..." />
+    <button id="send-btn">Send</button>
+  </div>
+</div>
+
+<!-- Top Bar -->
+<div id="topbar">
+  <div id="current-command">make a flappy bird game</div>
+  <div>
     <button>Invite</button>
-    <button class="upgrade">Upgrade</button>
+    <button class="highlight">Upgrade</button>
     <button>Publish</button>
   </div>
-</header>
+</div>
 
-<div class="dashboard">
-  <div class="sidebar">
-    <div class="sidebar-top">
-      <div class="project-name">🐦 bird-bop-bonanza</div>
-      <div class="status">⏳ Loading Live Preview</div>
-      <div class="sidebar-top-icons">⋮ &lt;/&gt; 📄</div>
-    </div>
-    <div class="sidebar-bottom">
-      <div class="chat-title">Ask Charmly...</div>
-      <div class="chat-input">
-        <input type="text" id="userInputSidebar" placeholder="Type your request...">
-        <button id="sendSidebar">Send</button>
-      </div>
-      <div class="chat-icons">
-        <span>✏️</span>
-        <span>💬</span>
-        <span>🎤</span>
-      </div>
-      <div id="chatSidebar" style="margin-top:10px; overflow-y:auto; max-height:200px; display:flex; flex-direction:column; gap:5px;"></div>
-    </div>
+<!-- Main Content / Live Preview -->
+<div id="main">
+  <div id="preview-container">
+    <iframe id="preview"></iframe>
   </div>
-
-  <div class="main">
-    <div class="preview" id="livePreviewContainer">
-      <div class="placeholder" id="placeholderContent">
-        <div style="font-size:50px;">💖</div>
-        <div>Spinning up preview...</div>
-      </div>
-      <iframe id="livePreview"></iframe>
-    </div>
-    <div class="features">
-      <div class="feature"><span>⚡</span> Instantly preview your changes</div>
-      <div class="feature"><span>📚</span> Set custom knowledge for every edit</div>
-      <div class="feature"><span>💾</span> Connect Supabase for backend</div>
-    </div>
+  <div id="features">
+    <div>Instantly preview your changes</div>
+    <div>Set custom knowledge for every edit</div>
+    <div>Connect Supabase for backend</div>
   </div>
 </div>
 
 <script>
-const chatSidebar = document.getElementById('chatSidebar');
-const inputSidebar = document.getElementById('userInputSidebar');
-const sendSidebar = document.getElementById('sendSidebar');
-const livePreview = document.getElementById('livePreview');
-const placeholder = document.getElementById('placeholderContent');
+// Elements
+const chat=document.getElementById("chat");
+const input=document.getElementById("chat-input");
+const sendBtn=document.getElementById("send-btn");
+const preview=document.getElementById("preview");
+const status=document.getElementById("status");
 
-function addSidebarMessage(text, sender='ai') {
-  const div = document.createElement('div');
-  div.style.padding='8px 12px';
-  div.style.borderRadius='10px';
-  div.style.maxWidth='80%';
-  div.style.alignSelf= sender==='ai' ? 'flex-start' : 'flex-end';
-  div.style.background= sender==='ai' ? '#e2e2e2' : '#0b3d91';
-  div.style.color= sender==='ai' ? '#333' : 'white';
-  div.textContent = text;
-  chatSidebar.appendChild(div);
-  chatSidebar.scrollTop = chatSidebar.scrollHeight;
-}
-
-async function typeEffect(element, text){
-  element.textContent = '';
+// Typing effect
+async function typeEffect(el,text){
+  el.textContent="";
+  el.classList.add("typing");
   for(let i=0;i<text.length;i++){
-    element.textContent += text[i];
+    el.textContent+=text[i];
     await new Promise(r=>setTimeout(r,10));
   }
+  el.classList.remove("typing");
 }
 
-function extractDiff(fullHTML){
-  let diff = fullHTML.replace(/<html[\s\S]*?>|<\/html>/gi,'')
-                     .replace(/<head[\s\S]*?>[\s\S]*?<\/head>/gi,'')
-                     .replace(/<body[\s\S]*?>|<\/body>/gi,'').trim();
-  const additions = diff.match(/<img[\s\S]*?>|<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi);
-  return additions ? additions.join('\n') : 'I added the main structure. You can now add images, sounds, etc.';
+// Extract essential additions (<style>, <img>, <script>)
+function extractDiff(html){
+  const matches=html.match(/<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>|<img[^>]*>/gi);
+  return matches?matches.join("\n"):"No additional elements to add";
 }
 
-sendSidebar.addEventListener('click', async ()=>{
-  const userText = inputSidebar.value.trim();
-  if(!userText) return;
-  addSidebarMessage(userText,'user');
-  inputSidebar.value='';
+// Add AI message
+function addAIMessage(content, fullHTML){
+  const msg=document.createElement("div");
+  msg.className="message ai";
+  msg.innerHTML=content;
 
-  const aiMsg = addSidebarMessage('Generating AI response...');
-  try{
-    const res = await fetch('/api/ai-generate',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({prompt:userText})
-    });
-    const data = await res.json();
-    const fullAIOutput = data.output || "<h2>No output</h2>";
+  const approveBtn=document.createElement("button");
+  approveBtn.textContent="Approve";
+  approveBtn.onclick=()=>{
+    preview.srcdoc=fullHTML;
+    status.textContent="Preview Updated!";
+  };
+  const rejectBtn=document.createElement("button");
+  rejectBtn.textContent="Reject";
+  rejectBtn.onclick=()=>{alert("Changes rejected!");};
 
-    // Update live preview iframe
-    livePreview.srcdoc = fullAIOutput;
-    placeholder.style.display='none';
+  msg.appendChild(approveBtn);
+  msg.appendChild(rejectBtn);
+  chat.appendChild(msg);
+  chat.scrollTop=chat.scrollHeight;
+}
 
-    // Show only diff in chat
-    const diffText = extractDiff(fullAIOutput);
-    await typeEffect(aiMsg, diffText);
-
-    // Add approve/reject buttons
-    const approveContainer = document.createElement('div');
-    approveContainer.style.marginTop='5px';
-    approveContainer.style.display='flex';
-    approveContainer.style.gap='5px';
-    const approveBtn = document.createElement('button');
-    approveBtn.textContent='Approve';
-    approveBtn.style.background='#4caf50';
-    approveBtn.style.color='white';
-    approveBtn.style.border='none';
-    approveBtn.style.padding='4px 8px';
-    approveBtn.style.borderRadius='6px';
-    approveBtn.style.cursor='pointer';
-    approveBtn.onclick = ()=>{ alert('Changes approved!'); };
-    const rejectBtn = document.createElement('button');
-    rejectBtn.textContent='Reject';
-    rejectBtn.style.background='#f44336';
-    rejectBtn.style.color='white';
-    rejectBtn.style.border='none';
-    rejectBtn.style.padding='4px 8px';
-    rejectBtn.style.borderRadius='6px';
-    rejectBtn.style.cursor='pointer';
-    rejectBtn.onclick = ()=>{ alert('Changes rejected!'); };
-    approveContainer.appendChild(approveBtn);
-    approveContainer.appendChild(rejectBtn);
-    chatSidebar.appendChild(approveContainer);
-
-  }catch(err){
-    console.error(err);
-    aiMsg.textContent = "Error fetching AI response.";
+// Load AI output
+window.addEventListener("DOMContentLoaded",()=>{
+  const aiOutput=localStorage.getItem("latestAIOutput");
+  if(aiOutput){
+    preview.srcdoc=aiOutput;
+    status.textContent="Preview Ready";
+    const diff=extractDiff(aiOutput);
+    addAIMessage("Charmly generated initial project. Essential additions:\n"+diff,aiOutput);
+    localStorage.removeItem("latestAIOutput");
+  }else{
+    status.textContent="No project loaded";
   }
 });
 
-inputSidebar.addEventListener('keydown', e=>{
-  if(e.key==='Enter') sendSidebar.click();
+// Send command
+sendBtn.addEventListener("click",async ()=>{
+  const text=input.value.trim();
+  if(!text) return;
+
+  const userMsg=document.createElement("div");
+  userMsg.className="message user";
+  userMsg.textContent=text;
+  chat.appendChild(userMsg);
+  chat.scrollTop=chat.scrollHeight;
+  input.value="";
+
+  // Fetch AI changes from backend
+  const res=await fetch("/api/ai-generate",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({prompt:text})
+  });
+  const data=await res.json();
+  const aiText=data.output||"No AI response";
+  const diff=extractDiff(aiText);
+
+  addAIMessage("Charmly suggests changes:\n"+diff, aiText);
+});
+
+input.addEventListener("keydown",e=>{
+  if(e.key==="Enter") sendBtn.click();
 });
 </script>
 
