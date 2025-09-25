@@ -13,12 +13,12 @@ function renderIframe(html, css, js) {
   doc.open();
   doc.write(html);
   if(css) {
-    const style = document.createElement("style");
+    const style = doc.createElement("style");
     style.textContent = css;
     doc.head.appendChild(style);
   }
   if(js) {
-    const script = document.createElement("script");
+    const script = doc.createElement("script");
     script.textContent = js;
     doc.body.appendChild(script);
   }
@@ -29,26 +29,24 @@ function renderIframe(html, css, js) {
 }
 
 // Slow, realistic progress bar helper
-let progressInterval;
-let progress = 0;
-
 function startProgressBar() {
   const container = document.getElementById("progress-container");
   const bar = document.getElementById("progress-bar");
   container.style.display = "block";
   bar.style.width = "0%";
-  progress = 0;
 
-  progressInterval = setInterval(() => {
+  let progress = 0;
+  const interval = setInterval(() => {
     if(progress < 95) {
-      progress += 5;
+      progress += 5; // 5% every tick
       bar.style.width = progress + "%";
     }
-  }, 5000); // 5% every 5 seconds
+  }, 5000); // every 5 seconds
+
+  return interval; // return interval ID so we can clear it
 }
 
 function finishProgressBar() {
-  clearInterval(progressInterval);
   const container = document.getElementById("progress-container");
   const bar = document.getElementById("progress-bar");
   bar.style.width = "100%";
@@ -58,27 +56,13 @@ function finishProgressBar() {
   }, 500);
 }
 
-// Typing dots animation
-function startTypingDots(element) {
-  let dots = 0;
-  return setInterval(() => {
-    dots = (dots + 1) % 4;
-    element.textContent = element.textContent.split('.')[0] + '.'.repeat(dots);
-  }, 500);
-}
-
-function stopTypingDots(interval) {
-  clearInterval(interval);
-}
-
-// Fetch AI code with slow progress + typing dots
+// Fetch AI code with slow progress
 async function generateSite(prompt) {
   const loading = document.getElementById("loading");
   loading.style.display = "block";
-  loading.textContent = "AI is typing";
+  loading.textContent = "Generating your AI website...";
 
-  const typingInterval = startTypingDots(loading);
-  startProgressBar();
+  const interval = startProgressBar();
 
   try {
     const res = await fetch("/api/ai-generate", {
@@ -88,8 +72,7 @@ async function generateSite(prompt) {
     });
 
     const data = await res.json();
-    stopTypingDots(typingInterval);
-    finishProgressBar();
+    clearInterval(interval);
 
     const htmlMatch = data.output.match(/```html([\s\S]*?)```/i);
     const cssMatch = data.output.match(/```css([\s\S]*?)```/i);
@@ -100,25 +83,24 @@ async function generateSite(prompt) {
     const js = jsMatch ? jsMatch[1].trim() : "";
 
     renderIframe(html, css, js);
+    finishProgressBar();
 
   } catch(err) {
-    stopTypingDots(typingInterval);
-    finishProgressBar();
+    clearInterval(interval);
     console.error(err);
     loading.textContent = "❌ Failed to generate website.";
   }
 }
 
-// AI Chat handler with slow progress + typing dots
+// AI Chat handler with slow progress
 async function chatWithAI(instruction) {
   if(!instruction || instruction.trim() === "") return;
 
   const loading = document.getElementById("loading");
   loading.style.display = "block";
-  loading.textContent = "AI is typing";
+  loading.textContent = "Applying AI changes...";
 
-  const typingInterval = startTypingDots(loading);
-  startProgressBar();
+  const interval = startProgressBar();
 
   try {
     const res = await fetch("/api/ai-generate", {
@@ -130,8 +112,7 @@ async function chatWithAI(instruction) {
     });
 
     const data = await res.json();
-    stopTypingDots(typingInterval);
-    finishProgressBar();
+    clearInterval(interval);
 
     const htmlMatch = data.output.match(/```html([\s\S]*?)```/i);
     const cssMatch = data.output.match(/```css([\s\S]*?)```/i);
@@ -142,10 +123,10 @@ async function chatWithAI(instruction) {
     const js = jsMatch ? jsMatch[1].trim() : "";
 
     renderIframe(html, css, js);
+    finishProgressBar();
 
   } catch(err) {
-    stopTypingDots(typingInterval);
-    finishProgressBar();
+    clearInterval(interval);
     console.error(err);
     loading.textContent = "❌ Failed to apply changes.";
   }
@@ -153,25 +134,30 @@ async function chatWithAI(instruction) {
 
 // Initialize dashboard
 function initDashboard() {
-  const prompt = localStorage.getItem("ai-prompt");
-  if(!prompt) { alert("No prompt found. Redirecting..."); window.location.href="index.html"; return; }
+  const storedPrompt = localStorage.getItem("ai-prompt");
+  if(!storedPrompt) { alert("No prompt found. Redirecting..."); window.location.href="index.html"; return; }
 
-  let projectName;
-  if(prompt.toLowerCase().includes(" for ")) {
-    projectName = prompt.split(" for ")[1].trim().replace(/\s+/g,"-").toLowerCase();
-  } else projectName = generateRandomName("site");
+  let projectName = localStorage.getItem("project-name"); // load saved name
+  if(!projectName) {
+    if(storedPrompt.toLowerCase().includes(" for ")) {
+      projectName = storedPrompt.split(" for ")[1].trim().replace(/\s+/g,"-").toLowerCase();
+    } else {
+      projectName = generateRandomName("site");
+    }
+  }
 
   document.getElementById("projectName").textContent = projectName;
 
-  generateSite(prompt);
+  generateSite(storedPrompt);
 
   // Buttons
   document.getElementById("backBtn").onclick = () => window.location.href = "index.html";
-  document.getElementById("regenBtn").onclick = () => generateSite(prompt);
+  document.getElementById("regenBtn").onclick = () => generateSite(storedPrompt);
   document.getElementById("renameBtn").onclick = () => {
     const newName = prompt("Enter new project name:", projectName);
     if(newName && newName.trim() !== "") {
       projectName = newName.trim();
+      localStorage.setItem("project-name", projectName); // save to localStorage
       document.getElementById("projectName").textContent = projectName;
     }
   };
