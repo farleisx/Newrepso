@@ -28,7 +28,8 @@ function renderIframe(html, css, js) {
   iframe.style.display = "block";
 }
 
-// Slow, realistic progress bar helper
+// Slow, realistic progress bar
+let progressInterval;
 function startProgressBar() {
   const container = document.getElementById("progress-container");
   const bar = document.getElementById("progress-bar");
@@ -36,19 +37,19 @@ function startProgressBar() {
   bar.style.width = "0%";
 
   let progress = 0;
-  const interval = setInterval(() => {
-    if(progress < 95) {
-      progress += 5; // 5% every tick
+  progressInterval = setInterval(() => {
+    if(progress < 95) { // slow increment up to 95%
+      progress += 5;
       bar.style.width = progress + "%";
     }
-  }, 10000); // every 10 seconds
-
-  return interval; // return interval ID so we can clear it
+  }, 5000); // 5% every 5 seconds
 }
 
 function finishProgressBar() {
+  clearInterval(progressInterval);
   const container = document.getElementById("progress-container");
   const bar = document.getElementById("progress-bar");
+
   bar.style.width = "100%";
   setTimeout(() => {
     container.style.display = "none";
@@ -62,7 +63,7 @@ async function generateSite(prompt) {
   loading.style.display = "block";
   loading.textContent = "Generating your AI website...";
 
-  const interval = startProgressBar();
+  startProgressBar();
 
   try {
     const res = await fetch("/api/ai-generate", {
@@ -72,7 +73,6 @@ async function generateSite(prompt) {
     });
 
     const data = await res.json();
-    clearInterval(interval);
 
     const htmlMatch = data.output.match(/```html([\s\S]*?)```/i);
     const cssMatch = data.output.match(/```css([\s\S]*?)```/i);
@@ -84,15 +84,14 @@ async function generateSite(prompt) {
 
     renderIframe(html, css, js);
     finishProgressBar();
-
   } catch(err) {
-    clearInterval(interval);
     console.error(err);
+    finishProgressBar();
     loading.textContent = "❌ Failed to generate website.";
   }
 }
 
-// AI Chat handler with slow progress
+// AI Chat handler
 async function chatWithAI(instruction) {
   if(!instruction || instruction.trim() === "") return;
 
@@ -100,7 +99,7 @@ async function chatWithAI(instruction) {
   loading.style.display = "block";
   loading.textContent = "Applying AI changes...";
 
-  const interval = startProgressBar();
+  startProgressBar();
 
   try {
     const res = await fetch("/api/ai-generate", {
@@ -112,7 +111,6 @@ async function chatWithAI(instruction) {
     });
 
     const data = await res.json();
-    clearInterval(interval);
 
     const htmlMatch = data.output.match(/```html([\s\S]*?)```/i);
     const cssMatch = data.output.match(/```css([\s\S]*?)```/i);
@@ -124,10 +122,9 @@ async function chatWithAI(instruction) {
 
     renderIframe(html, css, js);
     finishProgressBar();
-
   } catch(err) {
-    clearInterval(interval);
     console.error(err);
+    finishProgressBar();
     loading.textContent = "❌ Failed to apply changes.";
   }
 }
@@ -168,5 +165,5 @@ function initDashboard() {
   });
 }
 
-// Run
+// Run dashboard
 initDashboard();
