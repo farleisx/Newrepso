@@ -12,12 +12,12 @@ function renderIframe(html, css, js) {
   const doc = iframe.contentDocument || iframe.contentWindow.document;
   doc.open();
   doc.write(html);
-  if(css) {
+  if (css) {
     const style = doc.createElement("style");
     style.textContent = css;
     doc.head.appendChild(style);
   }
-  if(js) {
+  if (js) {
     const script = doc.createElement("script");
     script.textContent = js;
     doc.body.appendChild(script);
@@ -39,11 +39,11 @@ function updateProgress(targetPercent) {
   clearInterval(progressInterval);
   progressInterval = setInterval(() => {
     let current = parseFloat(bar.style.width) || 0;
-    if(current < targetPercent) {
+    if (current < targetPercent) {
       bar.style.width = Math.min(current + 1, targetPercent) + "%";
     } else {
       clearInterval(progressInterval);
-      if(targetPercent >= 100) {
+      if (targetPercent >= 100) {
         setTimeout(() => {
           container.style.display = "none";
           bar.style.width = "0%";
@@ -70,11 +70,14 @@ async function generateSite(prompt) {
     // simulate live progress
     let fakeProgress = 10;
     const fakeInterval = setInterval(() => {
-      if(fakeProgress < 70) { fakeProgress += Math.random() * 5; updateProgress(fakeProgress); }
-      else clearInterval(fakeInterval);
+      if (fakeProgress < 70) {
+        fakeProgress += Math.random() * 5;
+        updateProgress(fakeProgress);
+      } else clearInterval(fakeInterval);
     }, 200);
 
     const data = await res.json();
+    clearInterval(fakeInterval); // ✅ stop fake progress loop
     updateProgress(80);
 
     const htmlMatch = data.output.match(/```html([\s\S]*?)```/i);
@@ -87,7 +90,7 @@ async function generateSite(prompt) {
 
     renderIframe(html, css, js);
 
-  } catch(err) {
+  } catch (err) {
     console.error(err);
     loading.textContent = "❌ Failed to generate website.";
   }
@@ -95,7 +98,7 @@ async function generateSite(prompt) {
 
 // AI Chat handler with live progress
 async function chatWithAI(instruction) {
-  if(!instruction || instruction.trim() === "") return;
+  if (!instruction || instruction.trim() === "") return;
 
   const loading = document.getElementById("loading");
   loading.style.display = "block";
@@ -106,19 +109,22 @@ async function chatWithAI(instruction) {
     const res = await fetch("/api/ai-generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        prompt: `${localStorage.getItem("ai-prompt")}\n\nApply the following instruction to the generated website: "${instruction}"` 
+      body: JSON.stringify({
+        prompt: `${localStorage.getItem("ai-prompt")}\n\nApply the following instruction to the generated website: "${instruction}"`
       })
     });
 
     // simulate live progress
     let fakeProgress = 20;
     const fakeInterval = setInterval(() => {
-      if(fakeProgress < 70) { fakeProgress += Math.random() * 5; updateProgress(fakeProgress); }
-      else clearInterval(fakeInterval);
+      if (fakeProgress < 70) {
+        fakeProgress += Math.random() * 5;
+        updateProgress(fakeProgress);
+      } else clearInterval(fakeInterval);
     }, 150);
 
     const data = await res.json();
+    clearInterval(fakeInterval); // ✅ stop fake progress loop
     updateProgress(90);
 
     const htmlMatch = data.output.match(/```html([\s\S]*?)```/i);
@@ -131,20 +137,40 @@ async function chatWithAI(instruction) {
 
     renderIframe(html, css, js);
 
-  } catch(err) {
+  } catch (err) {
     console.error(err);
     loading.textContent = "❌ Failed to apply changes.";
+  }
+}
+
+// Device switcher
+function setDevice(mode) {
+  const iframe = document.getElementById("preview");
+  iframe.style.margin = "0 auto";
+  if (mode === "desktop") {
+    iframe.style.width = "100%";
+    iframe.style.height = "100%";
+  } else if (mode === "tablet") {
+    iframe.style.width = "768px";
+    iframe.style.height = "1024px";
+  } else if (mode === "mobile") {
+    iframe.style.width = "375px";
+    iframe.style.height = "667px";
   }
 }
 
 // Initialize dashboard
 function initDashboard() {
   const prompt = localStorage.getItem("ai-prompt");
-  if(!prompt) { alert("No prompt found. Redirecting..."); window.location.href="index.html"; return; }
+  if (!prompt) {
+    alert("No prompt found. Redirecting...");
+    window.location.href = "index.html";
+    return;
+  }
 
   let projectName;
-  if(prompt.toLowerCase().includes(" for ")) {
-    projectName = prompt.split(" for ")[1].trim().replace(/\s+/g,"-").toLowerCase();
+  if (prompt.toLowerCase().includes(" for ")) {
+    projectName = prompt.split(" for ")[1].trim().replace(/\s+/g, "-").toLowerCase();
   } else projectName = generateRandomName("site");
 
   document.getElementById("projectName").textContent = projectName;
@@ -156,7 +182,7 @@ function initDashboard() {
   document.getElementById("regenBtn").onclick = () => generateSite(prompt);
   document.getElementById("renameBtn").onclick = () => {
     const newName = prompt("Enter new project name:", projectName);
-    if(newName && newName.trim() !== "") {
+    if (newName && newName.trim() !== "") {
       projectName = newName.trim();
       document.getElementById("projectName").textContent = projectName;
     }
@@ -169,7 +195,7 @@ function initDashboard() {
     document.getElementById("ai-chat-input").value = "";
   };
   document.getElementById("ai-chat-input").addEventListener("keypress", (e) => {
-    if(e.key === "Enter") document.getElementById("ai-chat-send").click();
+    if (e.key === "Enter") document.getElementById("ai-chat-send").click();
   });
 }
 
