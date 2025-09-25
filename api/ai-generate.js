@@ -26,7 +26,9 @@ Rules:
 2. HTML must be complete (<html>, <head>, <body>).
 3. CSS goes inside its own block.
 4. JS goes inside its own block.
-    `;
+5. For any images requested or that enhance the design, automatically include them using free public image URLs (e.g., Unsplash, Pexels) that render correctly in the live preview.
+6. Avoid base64 unless the image is very small or an icon.
+`;
 
     const result = await model.generateContent(requestPrompt);
     const fullOutput = result.response.text();
