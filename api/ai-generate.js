@@ -7,33 +7,42 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { prompt } = req.body;
-  if (!prompt) {
-    return res.status(400).json({ error: "Missing prompt" });
-  }
+  const { prompt, previousCode } = req.body;
+  if (!prompt) return res.status(400).json({ error: "Missing prompt" });
 
   try {
-    // Use Gemini 2.5 Flash
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-    const requestPrompt = `
-You are an AI website builder agent.
-Generate a FULL working website/game (HTML, CSS, JS) for this request:
+    let requestPrompt = "";
+    if (previousCode) {
+      requestPrompt = `
+You are an AI website builder agent. You have the following existing code:
+${previousCode}
+
+The user wants to update or add features according to:
 "${prompt}"
 
 Rules:
-1. Always return code inside proper \`\`\`html, \`\`\`css, \`\`\`javascript blocks.
-2. HTML must be complete (<html>, <head>, <body>).
-3. CSS goes inside its own block.
-4. JS goes inside its own block.
-5. For any images requested or that enhance the design, automatically include them using free public image URLs (e.g., Unsplash, Pexels) that render correctly in the live preview.
-6. Avoid base64 unless the image is very small or an icon.
+1. Generate code in any language needed: HTML, CSS, JS, Python, Node.js, PHP, SQL, etc.
+2. Wrap all code in proper markdown blocks with language: \`\`\`html\`\`\`, \`\`\`css\`\`\`, \`\`\`javascript\`\`\`, \`\`\`python\`\`\`, etc.
+3. Only return the updated code (do not explain unless inside comments).
 `;
+    } else {
+      requestPrompt = `
+You are an AI website builder agent.
+Generate a FULL working website/game for this request:
+"${prompt}"
+
+Rules:
+1. Generate code in any language needed: HTML, CSS, JS, Python, Node.js, PHP, SQL, etc.
+2. Wrap all code in proper markdown blocks with language: \`\`\`html\`\`\`, \`\`\`css\`\`\`, \`\`\`javascript\`\`\`, \`\`\`python\`\`\`, etc.
+3. HTML must be complete (<html>, <head>, <body>).
+`;
+    }
 
     const result = await model.generateContent(requestPrompt);
     const fullOutput = result.response.text();
 
-    // Just return everything (dashboard will handle rendering)
     res.status(200).json({ output: fullOutput });
   } catch (err) {
     console.error(err);
