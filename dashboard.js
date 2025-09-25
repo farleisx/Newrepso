@@ -36,24 +36,29 @@ function startProgressBar() {
   bar.style.width = "0%";
 
   let progress = 0;
+
   const interval = setInterval(() => {
     if(progress < 95) {
-      progress += 5; // 5% every tick
+      progress += 5;
       bar.style.width = progress + "%";
     }
   }, 5000); // every 5 seconds
 
-  return interval; // return interval ID so we can clear it
-}
-
-function finishProgressBar() {
-  const container = document.getElementById("progress-container");
-  const bar = document.getElementById("progress-bar");
-  bar.style.width = "100%";
-  setTimeout(() => {
-    container.style.display = "none";
-    bar.style.width = "0%";
-  }, 500);
+  return {
+    intervalId: interval,
+    setProgress: (p) => {
+      progress = Math.min(p, 100);
+      bar.style.width = progress + "%";
+    },
+    finish: () => {
+      clearInterval(interval);
+      bar.style.width = "100%";
+      setTimeout(() => {
+        container.style.display = "none";
+        bar.style.width = "0%";
+      }, 500);
+    }
+  };
 }
 
 // Fetch AI code with slow progress
@@ -62,7 +67,7 @@ async function generateSite(prompt) {
   loading.style.display = "block";
   loading.textContent = "Generating your AI website...";
 
-  const interval = startProgressBar();
+  const progress = startProgressBar();
 
   try {
     const res = await fetch("/api/ai-generate", {
@@ -72,7 +77,6 @@ async function generateSite(prompt) {
     });
 
     const data = await res.json();
-    clearInterval(interval);
 
     const htmlMatch = data.output.match(/```html([\s\S]*?)```/i);
     const cssMatch = data.output.match(/```css([\s\S]*?)```/i);
@@ -83,10 +87,10 @@ async function generateSite(prompt) {
     const js = jsMatch ? jsMatch[1].trim() : "";
 
     renderIframe(html, css, js);
-    finishProgressBar();
+    progress.finish();
 
   } catch(err) {
-    clearInterval(interval);
+    progress.finish();
     console.error(err);
     loading.textContent = "❌ Failed to generate website.";
   }
@@ -100,7 +104,7 @@ async function chatWithAI(instruction) {
   loading.style.display = "block";
   loading.textContent = "Applying AI changes...";
 
-  const interval = startProgressBar();
+  const progress = startProgressBar();
 
   try {
     const res = await fetch("/api/ai-generate", {
@@ -112,7 +116,6 @@ async function chatWithAI(instruction) {
     });
 
     const data = await res.json();
-    clearInterval(interval);
 
     const htmlMatch = data.output.match(/```html([\s\S]*?)```/i);
     const cssMatch = data.output.match(/```css([\s\S]*?)```/i);
@@ -123,41 +126,44 @@ async function chatWithAI(instruction) {
     const js = jsMatch ? jsMatch[1].trim() : "";
 
     renderIframe(html, css, js);
-    finishProgressBar();
+    progress.finish();
 
   } catch(err) {
-    clearInterval(interval);
+    progress.finish();
     console.error(err);
     loading.textContent = "❌ Failed to apply changes.";
   }
 }
 
+// Device switcher
+function setDevice(device) {
+  const iframe = document.getElementById("preview");
+  if(device === "desktop") iframe.style.width = "100%";
+  else if(device === "tablet") iframe.style.width = "768px";
+  else if(device === "mobile") iframe.style.width = "375px";
+}
+
 // Initialize dashboard
 function initDashboard() {
-  const storedPrompt = localStorage.getItem("ai-prompt");
-  if(!storedPrompt) { alert("No prompt found. Redirecting..."); window.location.href="index.html"; return; }
+  const prompt = localStorage.getItem("ai-prompt");
+  if(!prompt) { alert("No prompt found. Redirecting..."); window.location.href="index.html"; return; }
 
-  let projectName = localStorage.getItem("project-name"); // load saved name
-  if(!projectName) {
-    if(storedPrompt.toLowerCase().includes(" for ")) {
-      projectName = storedPrompt.split(" for ")[1].trim().replace(/\s+/g,"-").toLowerCase();
-    } else {
-      projectName = generateRandomName("site");
-    }
-  }
+  let projectName;
+  if(prompt.toLowerCase().includes(" for ")) {
+    projectName = prompt.split(" for ")[1].trim().replace(/\s+/g,"-").toLowerCase();
+  } else projectName = generateRandomName("site");
 
   document.getElementById("projectName").textContent = projectName;
 
-  generateSite(storedPrompt);
+  generateSite(prompt);
 
   // Buttons
   document.getElementById("backBtn").onclick = () => window.location.href = "index.html";
-  document.getElementById("regenBtn").onclick = () => generateSite(storedPrompt);
+  document.getElementById("regenBtn").onclick = () => generateSite(prompt);
   document.getElementById("renameBtn").onclick = () => {
     const newName = prompt("Enter new project name:", projectName);
     if(newName && newName.trim() !== "") {
       projectName = newName.trim();
-      localStorage.setItem("project-name", projectName); // save to localStorage
       document.getElementById("projectName").textContent = projectName;
     }
   };
