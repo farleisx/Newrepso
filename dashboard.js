@@ -67,7 +67,6 @@ function initDashboard() {
     return;
   }
 
-  // Generate project name
   let projectName;
   if (prompt.toLowerCase().includes(" for ")) {
     projectName = prompt.split(" for ")[1].trim().replace(/\s+/g, "-").toLowerCase();
@@ -76,10 +75,8 @@ function initDashboard() {
   }
   document.getElementById("project-name").textContent = projectName;
 
-  // Generate AI site
   generateSite(prompt);
 
-  // Buttons
   document.getElementById("backBtn").onclick = () => window.location.href = "index.html";
   document.getElementById("regenBtn").onclick = () => generateSite(prompt);
 }
