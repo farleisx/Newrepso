@@ -1,131 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Charmly Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-  body { margin:0; font-family:'Inter',sans-serif; display:flex; height:100vh; overflow:hidden; background:#f7f9fc; color:#333; }
-  .sidebar { width:320px; background:#fff; display:flex; flex-direction:column; border-right:1px solid #ccc; }
-  .chat-header { padding:15px; font-weight:600; border-bottom:1px solid #ccc; }
-  .chat-messages { flex:1; padding:10px; overflow-y:auto; }
-  .chat-message { margin-bottom:12px; }
-  .chat-input { display:flex; padding:10px; border-top:1px solid #ccc; }
-  .chat-input textarea { flex:1; resize:none; border-radius:8px; padding:8px; border:1px solid #ccc; }
-  .chat-input button { margin-left:5px; padding:8px 12px; border:none; border-radius:8px; background:#0b3d91; color:#fff; cursor:pointer; }
-  .topbar { height:50px; flex-shrink:0; background:#fff; display:flex; justify-content:space-between; align-items:center; padding:0 20px; border-bottom:1px solid #ccc; }
-  .topbar .actions button { margin-left:10px; padding:6px 12px; border-radius:6px; border:none; cursor:pointer; }
-  .topbar .actions .upgrade { background:#f97316; color:#fff; }
-  .preview { flex:1; background:#fff; overflow:hidden; }
-  iframe { width:100%; height:100%; border:none; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Charmly Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: #f7f9fc;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    header {
+      background: #0b3d91;
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+    #project-name {
+      font-weight: 700;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    iframe {
+      flex: 1;
+      border: none;
+      width: 100%;
+    }
+    #loading {
+      text-align: center;
+      padding: 20px;
+      font-size: 1.2rem;
+      color: #666;
+    }
+  </style>
 </head>
 <body>
+  <header>
+    <h1>Project: <span id="project-name">Loading...</span></h1>
+    <button onclick="window.location.href='index.html'">← Back</button>
+  </header>
 
-<div class="sidebar">
-  <div class="chat-header">Ask Charmly...</div>
-  <div class="chat-messages" id="chatMessages"></div>
-  <div class="chat-input">
-    <textarea id="prompt" rows="2" placeholder="Describe changes..."></textarea>
-    <button id="sendBtn">Send</button>
-  </div>
-</div>
+  <main>
+    <div id="loading">Generating your AI website...</div>
+    <iframe id="preview" style="display:none;"></iframe>
+  </main>
 
-<div style="flex:1; display:flex; flex-direction:column;">
-  <div class="topbar">
-    <div class="project-name" id="projectName">loading...</div>
-    <div class="actions">
-      <button>Invite</button>
-      <button class="upgrade">Upgrade</button>
-      <button>Publish</button>
-    </div>
-  </div>
-  <div class="preview">
-    <iframe id="preview"></iframe>
-  </div>
-</div>
-
-<script>
-const chatMessages = document.getElementById("chatMessages");
-const sendBtn = document.getElementById("sendBtn");
-const promptInput = document.getElementById("prompt");
-const previewFrame = document.getElementById("preview");
-
-// extract code
-function extractCodeBlocks(text) {
-  const regex = /```(html|css|javascript)\s([\s\S]*?)```/g;
-  const blocks = { html: "", css: "", js: "" };
-  let match;
-  while ((match = regex.exec(text)) !== null) {
-    blocks[match[1]] += "\n" + match[2].trim();
-  }
-  return blocks;
-}
-
-// render in iframe
-function renderPreview(blocks){
-  const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
-  doc.open();
-  doc.write(blocks.html || "<body></body>");
-  if(blocks.css){
-    const style = doc.createElement("style");
-    style.textContent = blocks.css;
-    doc.head.appendChild(style);
-  }
-  if(blocks.js){
-    const script = doc.createElement("script");
-    script.textContent = blocks.js;
-    doc.body.appendChild(script);
-  }
-  doc.close();
-}
-
-// add chat bubble
-function addChatMessage(msg){
-  const div = document.createElement("div");
-  div.className = "chat-message";
-  div.textContent = msg;
-  chatMessages.appendChild(div);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-// send to backend
-async function sendPrompt(prompt){
-  addChatMessage("Generating...");
-  try {
-    const res = await fetch("/api/ai-generate", {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({prompt})
-    });
-    const data = await res.json();
-    const blocks = extractCodeBlocks(data.output || "");
-    const summary = data.chat || "AI updated your project.";
-    addChatMessage(summary);
-    if(blocks.html || blocks.css || blocks.js){
-      renderPreview(blocks);
+  <script>
+    // Helpers
+    function generateRandomName(base = "project") {
+      const syllables = ["qua","neo","zen","nova","lyra","flux","gyro","aero","omni","cyra"];
+      const random = syllables[Math.floor(Math.random() * syllables.length)];
+      const suffix = Math.floor(Math.random() * 1000);
+      return `${random}-${base}-${suffix}`;
     }
-  } catch(err){
-    addChatMessage("Error generating content.");
-    console.error(err);
-  }
-}
 
-// init from landing
-window.addEventListener("DOMContentLoaded", () => {
-  const savedPrompt = localStorage.getItem("ai-prompt");
-  const savedName = localStorage.getItem("project-name");
-  if(savedName) document.getElementById("projectName").textContent = savedName;
-  if(savedPrompt) sendPrompt(savedPrompt);
-});
+    async function initDashboard() {
+      const prompt = localStorage.getItem("ai-prompt");
+      if (!prompt) {
+        alert("No prompt found. Redirecting...");
+        window.location.href = "index.html";
+        return;
+      }
 
-sendBtn.addEventListener("click", ()=>{
-  const prompt = promptInput.value.trim();
-  if(!prompt) return;
-  sendPrompt(prompt);
-  promptInput.value = "";
-});
-</script>
+      // Project name
+      let projectName;
+      if (prompt.toLowerCase().includes(" for ")) {
+        projectName = prompt.split(" for ")[1].trim().replace(/\s+/g, "-").toLowerCase();
+      } else {
+        projectName = generateRandomName("site");
+      }
+      document.getElementById("project-name").textContent = projectName;
+
+      try {
+        const res = await fetch("/api/ai-generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt }),
+        });
+
+        const data = await res.json();
+        if (!data.output) throw new Error("No output from AI");
+
+        // Extract code blocks
+        const htmlMatch = data.output.match(/```html([\s\S]*?)```/i);
+        const cssMatch = data.output.match(/```css([\s\S]*?)```/i);
+        const jsMatch = data.output.match(/```javascript([\s\S]*?)```/i);
+
+        let fullHtml = htmlMatch ? htmlMatch[1].trim() : "<html><body><h1>No HTML generated</h1></body></html>";
+        const css = cssMatch ? `<style>${cssMatch[1].trim()}</style>` : "";
+        const js = jsMatch ? `<script>${jsMatch[1].trim()}<\/script>` : "";
+
+        // Inject into iframe
+        const iframe = document.getElementById("preview");
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        doc.open();
+        doc.write(fullHtml.replace("</head>", css + "</head>").replace("</body>", js + "</body>"));
+        doc.close();
+
+        document.getElementById("loading").style.display = "none";
+        iframe.style.display = "block";
+      } catch (err) {
+        console.error(err);
+        document.getElementById("loading").textContent = "❌ Failed to generate website.";
+      }
+    }
+
+    initDashboard();
+  </script>
 </body>
 </html>
