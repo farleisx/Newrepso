@@ -2,34 +2,39 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-export default async function handler(req,res){
-  if(req.method!=="POST") return res.status(405).json({error:"Method not allowed"});
-  const {prompt} = req.body;
-  if(!prompt) return res.status(400).json({error:"Missing prompt"});
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
 
-  try{
-    const model = genAI.getGenerativeModel({model:"gemini-1.5-flash"});
+  const { prompt } = req.body;
+  if (!prompt) {
+    return res.status(400).json({ error: "Missing prompt" });
+  }
+
+  try {
+    // Use Gemini 2.5 Flash
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
     const requestPrompt = `
-You are an AI website builder agent. When generating a website/game based on the request, do the following:
-1. Provide a chat message with only the essential additions (<style>, <script>, <img>).
-2. Provide the full working HTML, CSS, JS for the live preview.
-3. Clearly separate code blocks using triple backticks and language (html, css, javascript).
+You are an AI website builder agent.
+Generate a FULL working website/game (HTML, CSS, JS) for this request:
+"${prompt}"
 
-Request:
-${prompt}
+Rules:
+1. Always return code inside proper \`\`\`html, \`\`\`css, \`\`\`javascript blocks.
+2. HTML must be complete (<html>, <head>, <body>).
+3. CSS goes inside its own block.
+4. JS goes inside its own block.
     `;
+
     const result = await model.generateContent(requestPrompt);
     const fullOutput = result.response.text();
 
-    // Extract minimal additions for chat
-    const chatMatches = [...fullOutput.matchAll(/```(?:html|css|javascript)?\s*([\s\S]*?)```/gi)];
-    const chatOutput = chatMatches.map(match=>{
-      return match[1].split("\n").filter(line=>/<style|<script|<img/.test(line)).join("\n");
-    }).join("\n");
-
-    res.status(200).json({output:fullOutput, chat:chatOutput});
-  } catch(err){
+    // Just return everything (dashboard will handle rendering)
+    res.status(200).json({ output: fullOutput });
+  } catch (err) {
     console.error(err);
-    res.status(500).json({error:"AI request failed"});
+    res.status(500).json({ error: "AI request failed" });
   }
 }
