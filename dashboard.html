@@ -1,49 +1,121 @@
-// Progress bar helper
-function startProgressBar() {
-  const container = document.getElementById("progress-container");
-  const bar = document.getElementById("progress-bar");
-  const text = document.getElementById("progress-text");
-  container.style.display = "block";
-  bar.style.width = "0%";
-  text.textContent = "0%";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Charmly Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ... include all your dashboard CSS ... */
+  #progress-container{position:relative;width:100%;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;margin-top:0;display:none;}
+  #progress-bar{width:0%;height:100%;background:linear-gradient(90deg,#0b3d91,#3b82f6);transition:width 1s ease-in-out;border-radius:4px;}
+</style>
+</head>
+<body>
 
-  let progress = 0;
+<div class="topbar">
+  <div>Project: <span id="projectName">Loading...</span></div>
+  <button id="regenBtn">Regenerate</button>
+  <button id="renameBtn">Rename</button>
+</div>
 
-  const interval = setInterval(() => {
-    if(progress < 100) {
-      progress = Math.min(progress + 5, 100);
-      bar.style.width = progress + "%";
-      text.textContent = progress + "%";
-    }
-    if(progress >= 100) {
-      clearInterval(interval);
-      setTimeout(() => { container.style.display = "none"; bar.style.width = "0%"; text.textContent = "0%"; }, 500);
-    }
-  }, 5000);
+<!-- Progress bar -->
+<div id="progress-container"><div id="progress-bar"></div></div>
 
-  return { finish: () => { progress = 100; bar.style.width = "100%"; text.textContent = "100%"; clearInterval(interval); } };
-}
+<iframe id="preview" style="width:100%;height:80vh;display:none;"></iframe>
 
-// Example: call this to simulate loading AI site
-function generateSite(prompt) {
-  const loading = document.getElementById("loading");
-  loading.style.display = "block";
-  loading.textContent = "Generating your AI website...";
-  const progress = startProgressBar();
+<div class="chat-input">
+  <input id="ai-chat-input" placeholder="Tell AI to change something...">
+  <button id="ai-chat-send">Send</button>
+</div>
 
-  setTimeout(() => {
-    loading.style.display = "none";
-    progress.finish();
-    document.getElementById("preview").style.display = "block";
-  }, 60000); // simulate 1 min generation
-}
-
-// On dashboard load
-function initDashboard() {
+<script>
+  // Check login
+  const user = localStorage.getItem("ai-user");
   const prompt = localStorage.getItem("ai-prompt");
-  if(!prompt) { alert("No prompt found. Redirecting..."); window.location.href="index.html"; return; }
-  document.getElementById("projectName").textContent = "Your Project";
-  generateSite(prompt);
-}
+  if(!user || !prompt){ window.location.href="index.html"; }
 
-initDashboard();
+  document.getElementById("projectName").textContent = prompt.substring(0,20);
+
+  // Progress bar helper
+  function startProgressBar(){
+    const container = document.getElementById("progress-container");
+    const bar = document.getElementById("progress-bar");
+    container.style.display="block";
+    bar.style.width="0%";
+    let progress = 0;
+    const interval = setInterval(()=>{
+      if(progress<95){ progress+=5; bar.style.width=progress+"%"; }
+    },5000);
+    return { intervalId:interval, finish:()=>{ clearInterval(interval); bar.style.width="100%"; setTimeout(()=>{container.style.display="none"; bar.style.width="0%"; },500); } };
+  }
+
+  async function generateSite(){
+    const progress = startProgressBar();
+    try{
+      const res = await fetch("/api/ai-generate",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({prompt})
+      });
+      const data = await res.json();
+      const htmlMatch = data.output.match(/```html([\s\S]*?)```/i);
+      const cssMatch = data.output.match(/```css([\s\S]*?)```/i);
+      const jsMatch = data.output.match(/```javascript([\s\S]*?)```/i);
+
+      const html = htmlMatch ? htmlMatch[1].trim() : "<h1>No HTML generated</h1>";
+      const css = cssMatch ? cssMatch[1].trim() : "";
+      const js = jsMatch ? jsMatch[1].trim() : "";
+
+      const iframe = document.getElementById("preview");
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      doc.open();
+      doc.write(html);
+      if(css){ const style=document.createElement("style"); style.textContent=css; doc.head.appendChild(style); }
+      if(js){ const script=document.createElement("script"); script.textContent=js; doc.body.appendChild(script); }
+      doc.close();
+      iframe.style.display="block";
+      progress.finish();
+    }catch(err){ console.error(err); progress.finish(); alert("Failed to generate website."); }
+  }
+
+  generateSite();
+
+  // Chat input
+  document.getElementById("ai-chat-send").addEventListener("click", async()=>{
+    const instruction = document.getElementById("ai-chat-input").value.trim();
+    if(!instruction) return;
+    const progress = startProgressBar();
+    try{
+      const res = await fetch("/api/ai-generate",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ prompt: `${prompt}\nApply this instruction: ${instruction}` })
+      });
+      const data = await res.json();
+      const htmlMatch = data.output.match(/```html([\s\S]*?)```/i);
+      const cssMatch = data.output.match(/```css([\s\S]*?)```/i);
+      const jsMatch = data.output.match(/```javascript([\s\S]*?)```/i);
+      const html = htmlMatch ? htmlMatch[1].trim() : "<h1>No HTML generated</h1>";
+      const css = cssMatch ? cssMatch[1].trim() : "";
+      const js = jsMatch ? jsMatch[1].trim() : "";
+      const iframe = document.getElementById("preview");
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      doc.open();
+      doc.write(html);
+      if(css){ const style=document.createElement("style"); style.textContent=css; doc.head.appendChild(style); }
+      if(js){ const script=document.createElement("script"); script.textContent=js; doc.body.appendChild(script); }
+      doc.close();
+      progress.finish();
+    }catch(err){ console.error(err); progress.finish(); alert("Failed to update site."); }
+  });
+
+  // Regenerate / Rename buttons
+  document.getElementById("regenBtn").onclick = generateSite;
+  document.getElementById("renameBtn").onclick = ()=>{
+    const newName = prompt("Enter new project name:", prompt);
+    if(newName) document.getElementById("projectName").textContent=newName;
+  };
+</script>
+</body>
+</html>
