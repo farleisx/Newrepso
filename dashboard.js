@@ -12,12 +12,12 @@ function renderIframe(html, css, js) {
   const doc = iframe.contentDocument || iframe.contentWindow.document;
   doc.open();
   doc.write(html);
-  if (css) {
+  if(css) {
     const style = doc.createElement("style");
     style.textContent = css;
     doc.head.appendChild(style);
   }
-  if (js) {
+  if(js) {
     const script = doc.createElement("script");
     script.textContent = js;
     doc.body.appendChild(script);
@@ -26,39 +26,43 @@ function renderIframe(html, css, js) {
 
   document.getElementById("loading").style.display = "none";
   iframe.style.display = "block";
-  updateProgress(100); // complete
 }
 
-// Smooth live progress
-let progressInterval;
-function updateProgress(targetPercent) {
+// Slow, realistic progress bar helper
+function startProgressBar() {
   const container = document.getElementById("progress-container");
   const bar = document.getElementById("progress-bar");
   container.style.display = "block";
+  bar.style.width = "0%";
 
-  clearInterval(progressInterval);
-  progressInterval = setInterval(() => {
-    let current = parseFloat(bar.style.width) || 0;
-    if (current < targetPercent) {
-      bar.style.width = Math.min(current + 1, targetPercent) + "%";
-    } else {
-      clearInterval(progressInterval);
-      if (targetPercent >= 100) {
-        setTimeout(() => {
-          container.style.display = "none";
-          bar.style.width = "0%";
-        }, 500);
-      }
+  let progress = 0;
+  const interval = setInterval(() => {
+    if(progress < 95) {
+      progress += 5; // 5% every tick
+      bar.style.width = progress + "%";
     }
-  }, 15);
+  }, 10000); // every 10 seconds
+
+  return interval; // return interval ID so we can clear it
 }
 
-// Fetch AI code with live progress
+function finishProgressBar() {
+  const container = document.getElementById("progress-container");
+  const bar = document.getElementById("progress-bar");
+  bar.style.width = "100%";
+  setTimeout(() => {
+    container.style.display = "none";
+    bar.style.width = "0%";
+  }, 500);
+}
+
+// Fetch AI code with slow progress
 async function generateSite(prompt) {
   const loading = document.getElementById("loading");
   loading.style.display = "block";
   loading.textContent = "Generating your AI website...";
-  updateProgress(5);
+
+  const interval = startProgressBar();
 
   try {
     const res = await fetch("/api/ai-generate", {
@@ -67,18 +71,8 @@ async function generateSite(prompt) {
       body: JSON.stringify({ prompt })
     });
 
-    // simulate live progress
-    let fakeProgress = 10;
-    const fakeInterval = setInterval(() => {
-      if (fakeProgress < 70) {
-        fakeProgress += Math.random() * 5;
-        updateProgress(fakeProgress);
-      } else clearInterval(fakeInterval);
-    }, 200);
-
     const data = await res.json();
-    clearInterval(fakeInterval); // ✅ stop fake progress loop
-    updateProgress(80);
+    clearInterval(interval);
 
     const htmlMatch = data.output.match(/```html([\s\S]*?)```/i);
     const cssMatch = data.output.match(/```css([\s\S]*?)```/i);
@@ -89,43 +83,36 @@ async function generateSite(prompt) {
     const js = jsMatch ? jsMatch[1].trim() : "";
 
     renderIframe(html, css, js);
+    finishProgressBar();
 
-  } catch (err) {
+  } catch(err) {
+    clearInterval(interval);
     console.error(err);
     loading.textContent = "❌ Failed to generate website.";
   }
 }
 
-// AI Chat handler with live progress
+// AI Chat handler with slow progress
 async function chatWithAI(instruction) {
-  if (!instruction || instruction.trim() === "") return;
+  if(!instruction || instruction.trim() === "") return;
 
   const loading = document.getElementById("loading");
   loading.style.display = "block";
   loading.textContent = "Applying AI changes...";
-  updateProgress(10);
+
+  const interval = startProgressBar();
 
   try {
     const res = await fetch("/api/ai-generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        prompt: `${localStorage.getItem("ai-prompt")}\n\nApply the following instruction to the generated website: "${instruction}"`
+      body: JSON.stringify({ 
+        prompt: `${localStorage.getItem("ai-prompt")}\n\nApply the following instruction to the generated website: "${instruction}"` 
       })
     });
 
-    // simulate live progress
-    let fakeProgress = 20;
-    const fakeInterval = setInterval(() => {
-      if (fakeProgress < 70) {
-        fakeProgress += Math.random() * 5;
-        updateProgress(fakeProgress);
-      } else clearInterval(fakeInterval);
-    }, 150);
-
     const data = await res.json();
-    clearInterval(fakeInterval); // ✅ stop fake progress loop
-    updateProgress(90);
+    clearInterval(interval);
 
     const htmlMatch = data.output.match(/```html([\s\S]*?)```/i);
     const cssMatch = data.output.match(/```css([\s\S]*?)```/i);
@@ -136,41 +123,23 @@ async function chatWithAI(instruction) {
     const js = jsMatch ? jsMatch[1].trim() : "";
 
     renderIframe(html, css, js);
+    finishProgressBar();
 
-  } catch (err) {
+  } catch(err) {
+    clearInterval(interval);
     console.error(err);
     loading.textContent = "❌ Failed to apply changes.";
-  }
-}
-
-// Device switcher
-function setDevice(mode) {
-  const iframe = document.getElementById("preview");
-  iframe.style.margin = "0 auto";
-  if (mode === "desktop") {
-    iframe.style.width = "100%";
-    iframe.style.height = "100%";
-  } else if (mode === "tablet") {
-    iframe.style.width = "768px";
-    iframe.style.height = "1024px";
-  } else if (mode === "mobile") {
-    iframe.style.width = "375px";
-    iframe.style.height = "667px";
   }
 }
 
 // Initialize dashboard
 function initDashboard() {
   const prompt = localStorage.getItem("ai-prompt");
-  if (!prompt) {
-    alert("No prompt found. Redirecting...");
-    window.location.href = "index.html";
-    return;
-  }
+  if(!prompt) { alert("No prompt found. Redirecting..."); window.location.href="index.html"; return; }
 
   let projectName;
-  if (prompt.toLowerCase().includes(" for ")) {
-    projectName = prompt.split(" for ")[1].trim().replace(/\s+/g, "-").toLowerCase();
+  if(prompt.toLowerCase().includes(" for ")) {
+    projectName = prompt.split(" for ")[1].trim().replace(/\s+/g,"-").toLowerCase();
   } else projectName = generateRandomName("site");
 
   document.getElementById("projectName").textContent = projectName;
@@ -182,7 +151,7 @@ function initDashboard() {
   document.getElementById("regenBtn").onclick = () => generateSite(prompt);
   document.getElementById("renameBtn").onclick = () => {
     const newName = prompt("Enter new project name:", projectName);
-    if (newName && newName.trim() !== "") {
+    if(newName && newName.trim() !== "") {
       projectName = newName.trim();
       document.getElementById("projectName").textContent = projectName;
     }
@@ -195,7 +164,7 @@ function initDashboard() {
     document.getElementById("ai-chat-input").value = "";
   };
   document.getElementById("ai-chat-input").addEventListener("keypress", (e) => {
-    if (e.key === "Enter") document.getElementById("ai-chat-send").click();
+    if(e.key === "Enter") document.getElementById("ai-chat-send").click();
   });
 }
 
