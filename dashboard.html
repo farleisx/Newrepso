@@ -7,69 +7,44 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   body { margin:0; font-family:'Inter',sans-serif; display:flex; height:100vh; overflow:hidden; background:#f7f9fc; color:#333; }
-  body.dark { background:#121212; color:#eee; }
-
   .sidebar { width:320px; background:#fff; display:flex; flex-direction:column; border-right:1px solid #ccc; }
-  .sidebar.dark { background:#1e1e1e; border-color:#444; color:#eee; }
-
   .chat-header { padding:15px; font-weight:600; border-bottom:1px solid #ccc; }
-  .chat-header.dark { border-color:#444; }
-
   .chat-messages { flex:1; padding:10px; overflow-y:auto; }
-
   .chat-message { margin-bottom:12px; }
-  .chat-message p { margin-bottom:5px; }
-
-  .approve-buttons { display:flex; gap:5px; }
-  .approve-buttons button { flex:1; padding:5px 0; border:none; border-radius:6px; cursor:pointer; }
-  .approve { background:#10b981; color:#fff; }
-  .reject { background:#ef4444; color:#fff; }
-
   .chat-input { display:flex; padding:10px; border-top:1px solid #ccc; }
-  .chat-input.dark { border-color:#444; }
   .chat-input textarea { flex:1; resize:none; border-radius:8px; padding:8px; border:1px solid #ccc; }
   .chat-input button { margin-left:5px; padding:8px 12px; border:none; border-radius:8px; background:#0b3d91; color:#fff; cursor:pointer; }
-
   .topbar { height:50px; flex-shrink:0; background:#fff; display:flex; justify-content:space-between; align-items:center; padding:0 20px; border-bottom:1px solid #ccc; }
-  .topbar.dark { background:#121212; border-color:#444; color:#eee; }
-
   .topbar .actions button { margin-left:10px; padding:6px 12px; border-radius:6px; border:none; cursor:pointer; }
   .topbar .actions .upgrade { background:#f97316; color:#fff; }
-
   .preview { flex:1; background:#fff; overflow:hidden; }
-  .preview.dark { background:#121212; }
-
   iframe { width:100%; height:100%; border:none; }
 </style>
 </head>
 <body>
 
-  <!-- Sidebar -->
-  <div class="sidebar" id="sidebar">
-    <div class="chat-header" id="chatHeader">Ask Charmly...</div>
-    <div class="chat-messages" id="chatMessages"></div>
-    <div class="chat-input" id="chatInput">
-      <textarea id="prompt" rows="2" placeholder="Describe your website/game..."></textarea>
-      <button id="sendBtn">Send</button>
-    </div>
+<div class="sidebar">
+  <div class="chat-header">Ask Charmly...</div>
+  <div class="chat-messages" id="chatMessages"></div>
+  <div class="chat-input">
+    <textarea id="prompt" rows="2" placeholder="Describe changes..."></textarea>
+    <button id="sendBtn">Send</button>
   </div>
+</div>
 
-  <!-- Main Content -->
-  <div style="flex:1; display:flex; flex-direction:column;">
-    <!-- Topbar -->
-    <div class="topbar" id="topbar">
-      <div class="project-name" id="projectName">bird-bop-bonanza</div>
-      <div class="actions">
-        <button>Invite</button>
-        <button class="upgrade">Upgrade</button>
-        <button>Publish</button>
-      </div>
-    </div>
-    <!-- Live Preview -->
-    <div class="preview" id="previewContainer">
-      <iframe id="preview"></iframe>
+<div style="flex:1; display:flex; flex-direction:column;">
+  <div class="topbar">
+    <div class="project-name" id="projectName">loading...</div>
+    <div class="actions">
+      <button>Invite</button>
+      <button class="upgrade">Upgrade</button>
+      <button>Publish</button>
     </div>
   </div>
+  <div class="preview">
+    <iframe id="preview"></iframe>
+  </div>
+</div>
 
 <script>
 const chatMessages = document.getElementById("chatMessages");
@@ -77,24 +52,18 @@ const sendBtn = document.getElementById("sendBtn");
 const promptInput = document.getElementById("prompt");
 const previewFrame = document.getElementById("preview");
 
-// Extract code blocks from AI response
+// extract code
 function extractCodeBlocks(text) {
   const regex = /```(html|css|javascript)\s([\s\S]*?)```/g;
   const blocks = { html: "", css: "", js: "" };
   let match;
   while ((match = regex.exec(text)) !== null) {
-    const type = match[1].toLowerCase();
-    blocks[type] += "\n" + match[2].trim();
+    blocks[match[1]] += "\n" + match[2].trim();
   }
   return blocks;
 }
 
-// Chat shows only instructions / essential additions
-function getChatText(text) {
-  return text.replace(/```(html|css|javascript)[\s\S]*?```/g,"").trim();
-}
-
-// Inject code into live preview iframe
+// render in iframe
 function renderPreview(blocks){
   const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
   doc.open();
@@ -112,38 +81,18 @@ function renderPreview(blocks){
   doc.close();
 }
 
-// Add message to chat with approve/reject buttons
-function addChatMessage(msg, blocks){
+// add chat bubble
+function addChatMessage(msg){
   const div = document.createElement("div");
   div.className = "chat-message";
-
-  const textP = document.createElement("p");
-  textP.textContent = msg;
-  div.appendChild(textP);
-
-  if(blocks.html || blocks.css || blocks.js){
-    const btnDiv = document.createElement("div");
-    btnDiv.className = "approve-buttons";
-    const approve = document.createElement("button");
-    approve.textContent = "Approve";
-    approve.className = "approve";
-    approve.onclick = ()=> renderPreview(blocks);
-    const reject = document.createElement("button");
-    reject.textContent = "Reject";
-    reject.className = "reject";
-    reject.onclick = ()=> addChatMessage("Changes rejected.", {});
-    btnDiv.appendChild(approve);
-    btnDiv.appendChild(reject);
-    div.appendChild(btnDiv);
-  }
-
+  div.textContent = msg;
   chatMessages.appendChild(div);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Send prompt to AI backend
+// send to backend
 async function sendPrompt(prompt){
-  addChatMessage("Generating AI response...", {});
+  addChatMessage("Generating...");
   try {
     const res = await fetch("/api/ai-generate", {
       method:"POST",
@@ -151,20 +100,31 @@ async function sendPrompt(prompt){
       body: JSON.stringify({prompt})
     });
     const data = await res.json();
-    const aiText = data.chat || "AI generated content. Approve to apply.";
     const blocks = extractCodeBlocks(data.output || "");
-    addChatMessage(aiText, blocks);
+    const summary = data.chat || "AI updated your project.";
+    addChatMessage(summary);
+    if(blocks.html || blocks.css || blocks.js){
+      renderPreview(blocks);
+    }
   } catch(err){
+    addChatMessage("Error generating content.");
     console.error(err);
-    addChatMessage("Error generating content.", {});
   }
 }
 
-// Event
+// init from landing
+window.addEventListener("DOMContentLoaded", () => {
+  const savedPrompt = localStorage.getItem("ai-prompt");
+  const savedName = localStorage.getItem("project-name");
+  if(savedName) document.getElementById("projectName").textContent = savedName;
+  if(savedPrompt) sendPrompt(savedPrompt);
+});
+
 sendBtn.addEventListener("click", ()=>{
   const prompt = promptInput.value.trim();
-  if(!prompt) return alert("Type something first!");
+  if(!prompt) return;
   sendPrompt(prompt);
+  promptInput.value = "";
 });
 </script>
 </body>
