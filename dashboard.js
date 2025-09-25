@@ -13,12 +13,12 @@ function renderIframe(html, css, js) {
   doc.open();
   doc.write(html);
   if(css) {
-    const style = doc.createElement("style");
+    const style = document.createElement("style");
     style.textContent = css;
     doc.head.appendChild(style);
   }
   if(js) {
-    const script = doc.createElement("script");
+    const script = document.createElement("script");
     script.textContent = js;
     doc.body.appendChild(script);
   }
@@ -28,17 +28,19 @@ function renderIframe(html, css, js) {
   iframe.style.display = "block";
 }
 
-// Slow, realistic progress bar
+// Slow, realistic progress bar helper
 let progressInterval;
+let progress = 0;
+
 function startProgressBar() {
   const container = document.getElementById("progress-container");
   const bar = document.getElementById("progress-bar");
   container.style.display = "block";
   bar.style.width = "0%";
+  progress = 0;
 
-  let progress = 0;
   progressInterval = setInterval(() => {
-    if(progress < 95) { // slow increment up to 95%
+    if(progress < 95) {
       progress += 5;
       bar.style.width = progress + "%";
     }
@@ -49,7 +51,6 @@ function finishProgressBar() {
   clearInterval(progressInterval);
   const container = document.getElementById("progress-container");
   const bar = document.getElementById("progress-bar");
-
   bar.style.width = "100%";
   setTimeout(() => {
     container.style.display = "none";
@@ -57,12 +58,26 @@ function finishProgressBar() {
   }, 500);
 }
 
-// Fetch AI code with slow progress
+// Typing dots animation
+function startTypingDots(element) {
+  let dots = 0;
+  return setInterval(() => {
+    dots = (dots + 1) % 4;
+    element.textContent = element.textContent.split('.')[0] + '.'.repeat(dots);
+  }, 500);
+}
+
+function stopTypingDots(interval) {
+  clearInterval(interval);
+}
+
+// Fetch AI code with slow progress + typing dots
 async function generateSite(prompt) {
   const loading = document.getElementById("loading");
   loading.style.display = "block";
-  loading.textContent = "Generating your AI website...";
+  loading.textContent = "AI is typing";
 
+  const typingInterval = startTypingDots(loading);
   startProgressBar();
 
   try {
@@ -73,6 +88,8 @@ async function generateSite(prompt) {
     });
 
     const data = await res.json();
+    stopTypingDots(typingInterval);
+    finishProgressBar();
 
     const htmlMatch = data.output.match(/```html([\s\S]*?)```/i);
     const cssMatch = data.output.match(/```css([\s\S]*?)```/i);
@@ -83,22 +100,24 @@ async function generateSite(prompt) {
     const js = jsMatch ? jsMatch[1].trim() : "";
 
     renderIframe(html, css, js);
-    finishProgressBar();
+
   } catch(err) {
-    console.error(err);
+    stopTypingDots(typingInterval);
     finishProgressBar();
+    console.error(err);
     loading.textContent = "❌ Failed to generate website.";
   }
 }
 
-// AI Chat handler
+// AI Chat handler with slow progress + typing dots
 async function chatWithAI(instruction) {
   if(!instruction || instruction.trim() === "") return;
 
   const loading = document.getElementById("loading");
   loading.style.display = "block";
-  loading.textContent = "Applying AI changes...";
+  loading.textContent = "AI is typing";
 
+  const typingInterval = startTypingDots(loading);
   startProgressBar();
 
   try {
@@ -111,6 +130,8 @@ async function chatWithAI(instruction) {
     });
 
     const data = await res.json();
+    stopTypingDots(typingInterval);
+    finishProgressBar();
 
     const htmlMatch = data.output.match(/```html([\s\S]*?)```/i);
     const cssMatch = data.output.match(/```css([\s\S]*?)```/i);
@@ -121,10 +142,11 @@ async function chatWithAI(instruction) {
     const js = jsMatch ? jsMatch[1].trim() : "";
 
     renderIframe(html, css, js);
-    finishProgressBar();
+
   } catch(err) {
-    console.error(err);
+    stopTypingDots(typingInterval);
     finishProgressBar();
+    console.error(err);
     loading.textContent = "❌ Failed to apply changes.";
   }
 }
@@ -165,5 +187,5 @@ function initDashboard() {
   });
 }
 
-// Run dashboard
+// Run
 initDashboard();
