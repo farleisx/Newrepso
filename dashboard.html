@@ -6,29 +6,49 @@
 <title>Charmly Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  body { margin:0; font-family:'Inter',sans-serif; display:flex; flex-direction:column; height:100vh; background:#f7f9fc; color:#333; }
-  header { background:#0b3d91; color:#fff; padding:15px 20px; display:flex; justify-content:space-between; align-items:center; }
-  header h1 { margin:0; font-size:1.2rem; }
-  main { flex:1; display:flex; flex-direction:column; }
-  iframe { flex:1; border:none; width:100%; display:none; }
-  #loading { text-align:center; padding:20px; font-size:1.2rem; color:#666; }
-  button { padding:6px 12px; border:none; border-radius:6px; cursor:pointer; background:#fff; color:#0b3d91; font-weight:600; }
-  button:hover { background:#e0e0e0; }
+  body { margin:0; font-family:'Inter',sans-serif; display:flex; height:100vh; overflow:hidden; background:#f7f9fc; color:#333; }
+  .sidebar { width:280px; background:#fff; border-right:1px solid #ccc; display:flex; flex-direction:column; }
+  .sidebar h2 { padding:15px; margin:0; border-bottom:1px solid #ccc; font-size:1.2rem; }
+  .project-list { flex:1; overflow-y:auto; }
+  .project-item { padding:10px 15px; border-bottom:1px solid #eee; cursor:pointer; display:flex; justify-content:space-between; align-items:center; }
+  .project-item:hover { background:#f0f0f0; }
+  .project-item button { background:none; border:none; color:red; cursor:pointer; font-size:0.9rem; }
+  .topbar { height:50px; background:#0b3d91; color:#fff; display:flex; justify-content:space-between; align-items:center; padding:0 20px; }
+  .topbar button { background:#f97316; border:none; border-radius:6px; padding:5px 10px; color:#fff; cursor:pointer; margin-left:5px; }
+  .preview-container { flex:1; display:flex; flex-direction:column; }
+  #preview { flex:1; border:none; width:100%; }
+  #loading { text-align:center; padding:15px; font-size:1.2rem; color:#666; }
+  .device-buttons { padding:10px; display:flex; gap:10px; }
 </style>
 </head>
 <body>
-<header>
-  <h1>Project: <span id="project-name">Loading...</span></h1>
-  <div>
-    <button id="backBtn">← Back</button>
-    <button id="regenBtn">Regenerate</button>
-  </div>
-</header>
 
-<main>
-  <div id="loading">Generating your AI website...</div>
-  <iframe id="preview"></iframe>
-</main>
+<div class="sidebar">
+  <h2>Projects</h2>
+  <div class="project-list" id="projectList"></div>
+</div>
+
+<div style="flex:1; display:flex; flex-direction:column;">
+  <div class="topbar">
+    <div>Project: <span id="projectName">Loading...</span></div>
+    <div>
+      <button id="regenBtn">Regenerate</button>
+      <button id="renameBtn">Rename</button>
+      <button id="backBtn">← Back</button>
+    </div>
+  </div>
+
+  <div class="device-buttons">
+    <button onclick="setDevice('desktop')">Desktop</button>
+    <button onclick="setDevice('tablet')">Tablet</button>
+    <button onclick="setDevice('mobile')">Mobile</button>
+  </div>
+
+  <div class="preview-container">
+    <div id="loading">Loading project...</div>
+    <iframe id="preview" style="display:none;"></iframe>
+  </div>
+</div>
 
 <script src="dashboard.js"></script>
 </body>
