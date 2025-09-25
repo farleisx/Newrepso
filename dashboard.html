@@ -6,66 +6,20 @@
 <title>Charmly Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  body {
-    margin: 0;
-    font-family: 'Inter', sans-serif;
-    background: #f7f9fc;
-    color: #333;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-  }
-  header {
-    background: #0b3d91;
-    color: white;
-    padding: 15px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  header h1 {
-    margin: 0;
-    font-size: 1.2rem;
-  }
-  #project-name {
-    font-weight: 700;
-  }
-  main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
-  iframe {
-    flex: 1;
-    border: none;
-    width: 100%;
-  }
-  #loading {
-    text-align: center;
-    padding: 20px;
-    font-size: 1.2rem;
-    color: #666;
-  }
-  .buttons {
-    padding: 10px 20px;
-    display: flex;
-    gap: 10px;
-  }
-  .buttons button {
-    padding: 8px 12px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    background: #0b3d91;
-    color: white;
-  }
+  body { margin:0; font-family:'Inter',sans-serif; display:flex; flex-direction:column; height:100vh; background:#f7f9fc; color:#333; }
+  header { background:#0b3d91; color:#fff; padding:15px 20px; display:flex; justify-content:space-between; align-items:center; }
+  header h1 { margin:0; font-size:1.2rem; }
+  main { flex:1; display:flex; flex-direction:column; }
+  iframe { flex:1; border:none; width:100%; display:none; }
+  #loading { text-align:center; padding:20px; font-size:1.2rem; color:#666; }
+  button { padding:6px 12px; border:none; border-radius:6px; cursor:pointer; background:#fff; color:#0b3d91; font-weight:600; }
+  button:hover { background:#e0e0e0; }
 </style>
 </head>
 <body>
-
 <header>
   <h1>Project: <span id="project-name">Loading...</span></h1>
-  <div class="buttons">
+  <div>
     <button id="backBtn">← Back</button>
     <button id="regenBtn">Regenerate</button>
   </div>
@@ -73,10 +27,9 @@
 
 <main>
   <div id="loading">Generating your AI website...</div>
-  <iframe id="preview" style="display:none;"></iframe>
+  <iframe id="preview"></iframe>
 </main>
 
-<!-- Dashboard JS -->
 <script src="dashboard.js"></script>
 </body>
 </html>
