@@ -6,79 +6,149 @@ function generateRandomName(base = "site") {
   return `${random}-${base}-${suffix}`;
 }
 
+function saveProject(project) {
+  let projects = JSON.parse(localStorage.getItem("projects")||"[]");
+  const idx = projects.findIndex(p=>p.id===project.id);
+  if(idx>=0) projects[idx] = project;
+  else projects.push(project);
+  localStorage.setItem("projects", JSON.stringify(projects));
+}
+
+function loadProjects() {
+  return JSON.parse(localStorage.getItem("projects")||"[]");
+}
+
+function renderProjectList() {
+  const listEl = document.getElementById("projectList");
+  listEl.innerHTML = "";
+  const projects = loadProjects();
+  projects.forEach(p=>{
+    const div = document.createElement("div");
+    div.className = "project-item";
+    div.innerHTML = `<span>${p.name}</span><button data-id="${p.id}">✕</button>`;
+    div.onclick = ()=>loadProject(p.id);
+    div.querySelector("button").onclick = e=>{
+      e.stopPropagation();
+      deleteProject(p.id);
+    };
+    listEl.appendChild(div);
+  });
+}
+
 // Inject code into iframe
 function renderIframe(html, css, js) {
   const iframe = document.getElementById("preview");
   const doc = iframe.contentDocument || iframe.contentWindow.document;
   doc.open();
   doc.write(html);
-
-  if (css) {
-    const style = doc.createElement("style");
-    style.textContent = css;
-    doc.head.appendChild(style);
-  }
-
-  if (js) {
-    const script = doc.createElement("script");
-    script.textContent = js;
-    doc.body.appendChild(script);
-  }
-
+  if(css){ const style=doc.createElement("style"); style.textContent=css; doc.head.appendChild(style); }
+  if(js){ const script=doc.createElement("script"); script.textContent=js; doc.body.appendChild(script); }
   doc.close();
-  document.getElementById("loading").style.display = "none";
-  iframe.style.display = "block";
+  document.getElementById("loading").style.display="none";
+  iframe.style.display="block";
 }
 
-// Fetch AI code
-async function generateSite(prompt) {
+// Generate site using AI
+async function generateSite(prompt, projectId=null) {
   const loading = document.getElementById("loading");
   loading.textContent = "Generating your AI website...";
   try {
     const res = await fetch("/api/ai-generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt })
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({prompt})
     });
     const data = await res.json();
-    if (!data.output) throw new Error("No AI output");
+    if(!data.output) throw new Error("No AI output");
 
     const htmlMatch = data.output.match(/```html([\s\S]*?)```/i);
     const cssMatch = data.output.match(/```css([\s\S]*?)```/i);
     const jsMatch = data.output.match(/```javascript([\s\S]*?)```/i);
 
-    const html = htmlMatch ? htmlMatch[1].trim() : "<html><body><h1>No HTML generated</h1></body></html>";
-    const css = cssMatch ? cssMatch[1].trim() : "";
-    const js = jsMatch ? jsMatch[1].trim() : "";
+    const html = htmlMatch?htmlMatch[1].trim():"<html><body><h1>No HTML generated</h1></body></html>";
+    const css = cssMatch?cssMatch[1].trim():"";
+    const js = jsMatch?jsMatch[1].trim():"";
 
-    renderIframe(html, css, js);
-  } catch (err) {
+    renderIframe(html,css,js);
+
+    // Save project
+    const project = {
+      id: projectId||Date.now().toString(),
+      name: document.getElementById("projectName").textContent,
+      prompt, html, css, js
+    };
+    saveProject(project);
+    renderProjectList();
+  } catch(err) {
     console.error(err);
-    loading.textContent = "❌ Failed to generate website.";
+    document.getElementById("loading").textContent="❌ Failed to generate website.";
   }
 }
 
+// Load project by ID
+function loadProject(id) {
+  const project = loadProjects().find(p=>p.id===id);
+  if(!project) return;
+  document.getElementById("projectName").textContent=project.name;
+  renderIframe(project.html,project.css,project.js);
+}
+
+// Delete project
+function deleteProject(id) {
+  let projects = loadProjects();
+  projects = projects.filter(p=>p.id!==id);
+  localStorage.setItem("projects", JSON.stringify(projects));
+  renderProjectList();
+  document.getElementById("loading").textContent = "Select a project";
+  document.getElementById("preview").style.display = "none";
+}
+
+// Set device iframe size
+function setDevice(type){
+  const iframe=document.getElementById("preview");
+  if(type==="desktop"){ iframe.style.width="100%"; iframe.style.height="100%"; }
+  else if(type==="tablet"){ iframe.style.width="768px"; iframe.style.height="1024px"; }
+  else if(type==="mobile"){ iframe.style.width="375px"; iframe.style.height="667px"; }
+}
+
 // Init dashboard
-function initDashboard() {
+function initDashboard(){
   const prompt = localStorage.getItem("ai-prompt");
-  if (!prompt) {
-    alert("No prompt found. Redirecting...");
-    window.location.href = "index.html";
-    return;
-  }
-
   let projectName;
-  if (prompt.toLowerCase().includes(" for ")) {
-    projectName = prompt.split(" for ")[1].trim().replace(/\s+/g, "-").toLowerCase();
+  if(prompt){
+    if(prompt.toLowerCase().includes(" for ")){
+      projectName = prompt.split(" for ")[1].trim().replace(/\s+/g,"-").toLowerCase();
+    } else {
+      projectName = generateRandomName("site");
+    }
+    document.getElementById("projectName").textContent = projectName;
+    generateSite(prompt);
+    localStorage.removeItem("ai-prompt"); // prevent duplicate regeneration
   } else {
-    projectName = generateRandomName("site");
+    document.getElementById("loading").textContent="Select a project from sidebar";
   }
-  document.getElementById("project-name").textContent = projectName;
 
-  generateSite(prompt);
+  renderProjectList();
 
-  document.getElementById("backBtn").onclick = () => window.location.href = "index.html";
-  document.getElementById("regenBtn").onclick = () => generateSite(prompt);
+  document.getElementById("regenBtn").onclick = ()=>{
+    const currentName = document.getElementById("projectName").textContent;
+    const project = loadProjects().find(p=>p.name===currentName);
+    if(project) generateSite(project.prompt, project.id);
+  };
+  document.getElementById("renameBtn").onclick = ()=>{
+    const newName = prompt("Enter new project name:");
+    if(newName){
+      const currentName = document.getElementById("projectName").textContent;
+      const project = loadProjects().find(p=>p.name===currentName);
+      if(project){
+        project.name=newName;
+        saveProject(project);
+        document.getElementById("projectName").textContent=newName;
+        renderProjectList();
+      }
+    }
+  };
+  document.getElementById("backBtn").onclick = ()=>window.location.href="index.html";
 }
 
 // Run
