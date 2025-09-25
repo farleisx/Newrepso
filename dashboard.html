@@ -1,218 +1,49 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Charmly Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Inter', sans-serif;
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-      background: #f7f9fc;
-      color: #333;
-    }
-    .sidebar {
-      width: 280px;
-      background: #fff;
-      border-right: 1px solid #ccc;
-      display: flex;
-      flex-direction: column;
-    }
-    .sidebar h2 {
-      padding: 15px;
-      margin: 0;
-      border-bottom: 1px solid #ccc;
-      font-size: 1.2rem;
-      font-weight: 600;
-    }
-    .project-list {
-      flex: 1;
-      overflow-y: auto;
-    }
-    .project-item {
-      padding: 10px 15px;
-      border-bottom: 1px solid #eee;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .project-item:hover { background: #f0f0f0; }
-    .project-item button {
-      background: none;
-      border: none;
-      color: red;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-    .topbar {
-      height: 50px;
-      background: #0b3d91;
-      color: #fff;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0 20px;
-      font-weight: 600;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-    }
-    .topbar button {
-      background: #f97316;
-      border: none;
-      border-radius: 6px;
-      padding: 6px 12px;
-      color: #fff;
-      cursor: pointer;
-      margin-left: 5px;
-      transition: all 0.2s;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .topbar button:hover { background: #ea580c; }
+// Progress bar helper
+function startProgressBar() {
+  const container = document.getElementById("progress-container");
+  const bar = document.getElementById("progress-bar");
+  const text = document.getElementById("progress-text");
+  container.style.display = "block";
+  bar.style.width = "0%";
+  text.textContent = "0%";
 
-    .preview-container {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      background: #fafbff;
-      position: relative;
-    }
-    #preview {
-      flex: 1;
-      border: none;
-      width: 100%;
-      display: none;
-      border-radius: 8px;
-      margin: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    #loading {
-      text-align: center;
-      padding: 20px;
-      font-size: 1.2rem;
-      color: #666;
-    }
+  let progress = 0;
 
-    .device-buttons {
-      padding: 10px;
-      display: flex;
-      gap: 10px;
-      border-bottom: 1px solid #ddd;
-      background: #fff;
+  const interval = setInterval(() => {
+    if(progress < 100) {
+      progress = Math.min(progress + 5, 100);
+      bar.style.width = progress + "%";
+      text.textContent = progress + "%";
     }
-    .device-buttons button {
-      border: 1px solid #ccc;
-      background: #fff;
-      border-radius: 6px;
-      padding: 6px 12px;
-      cursor: pointer;
-      transition: all 0.2s;
+    if(progress >= 100) {
+      clearInterval(interval);
+      setTimeout(() => { container.style.display = "none"; bar.style.width = "0%"; text.textContent = "0%"; }, 500);
     }
-    .device-buttons button:hover {
-      background: #0b3d91;
-      color: #fff;
-      border-color: #0b3d91;
-    }
+  }, 5000);
 
-    /* Modern progress bar */
-    #progress-container {
-      position: relative;
-      width: 100%;
-      height: 8px;
-      background: #e5e7eb;
-      border-radius: 4px;
-      overflow: hidden;
-      margin: 0;
-      display: none;
-      margin-top: 0;
-    }
-    #progress-bar {
-      width: 0%;
-      height: 100%;
-      background: linear-gradient(90deg, #0b3d91, #3b82f6);
-      transition: width 1s ease-in-out;
-      border-radius: 4px;
-    }
-    #progress-text {
-      position: absolute;
-      right: 10px;
-      top: -25px;
-      font-size: 0.9rem;
-      color: #0b3d91;
-      font-weight: 600;
-    }
+  return { finish: () => { progress = 100; bar.style.width = "100%"; text.textContent = "100%"; clearInterval(interval); } };
+}
 
-    /* Chat input */
-    .chat-input {
-      padding: 10px;
-      border-top: 1px solid #ccc;
-      display: flex;
-      gap: 5px;
-      background: #fff;
-    }
-    .chat-input input {
-      flex: 1;
-      padding: 8px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      outline: none;
-    }
-    .chat-input button {
-      padding: 8px 14px;
-      border: none;
-      border-radius: 6px;
-      background: #0b3d91;
-      color: #fff;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .chat-input button:hover { background: #073073; }
-  </style>
-</head>
-<body>
+// Example: call this to simulate loading AI site
+function generateSite(prompt) {
+  const loading = document.getElementById("loading");
+  loading.style.display = "block";
+  loading.textContent = "Generating your AI website...";
+  const progress = startProgressBar();
 
-  <div class="sidebar">
-    <h2>Projects</h2>
-    <div class="project-list" id="projectList"></div>
-  </div>
+  setTimeout(() => {
+    loading.style.display = "none";
+    progress.finish();
+    document.getElementById("preview").style.display = "block";
+  }, 60000); // simulate 1 min generation
+}
 
-  <div style="flex:1; display:flex; flex-direction:column;">
-    <div class="topbar">
-      <div>Project: <span id="projectName">Loading...</span></div>
-      <div>
-        <button id="regenBtn">Regenerate</button>
-        <button id="renameBtn">Rename</button>
-        <button id="backBtn">← Back</button>
-      </div>
-    </div>
+// On dashboard load
+function initDashboard() {
+  const prompt = localStorage.getItem("ai-prompt");
+  if(!prompt) { alert("No prompt found. Redirecting..."); window.location.href="index.html"; return; }
+  document.getElementById("projectName").textContent = "Your Project";
+  generateSite(prompt);
+}
 
-    <div class="device-buttons">
-      <button onclick="setDevice('desktop')">Desktop</button>
-      <button onclick="setDevice('tablet')">Tablet</button>
-      <button onclick="setDevice('mobile')">Mobile</button>
-    </div>
-
-    <!-- Progress bar -->
-    <div id="progress-container">
-      <div id="progress-bar"></div>
-      <div id="progress-text">0%</div>
-    </div>
-
-    <div class="preview-container">
-      <div id="loading">Loading project...</div>
-      <iframe id="preview"></iframe>
-
-      <!-- Chat Input -->
-      <div class="chat-input">
-        <input id="ai-chat-input" type="text" placeholder="Tell AI to change something...">
-        <button id="ai-chat-send">Send</button>
-      </div>
-    </div>
-  </div>
-
-  <script src="dashboard.js"></script>
-</body>
-</html>
+initDashboard();
