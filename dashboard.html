@@ -29,13 +29,13 @@
     z-index: 10;
   }
 
-  .topbar .project-name {
+  .topbar div span {
     font-weight: 600;
     font-size: 16px;
     color: #374151;
   }
 
-  .topbar .buttons button {
+  .topbar button {
     margin-left: 10px;
     padding: 6px 14px;
     border: none;
@@ -46,10 +46,7 @@
     cursor: pointer;
     transition: background 0.2s ease;
   }
-
-  .topbar .buttons button:hover {
-    background: #2563eb;
-  }
+  .topbar button:hover { background: #2563eb; }
 
   /* Progress bar */
   #progress-container {
@@ -62,7 +59,6 @@
     margin: 0;
     display: none;
   }
-
   #progress-bar {
     width: 0%;
     height: 100%;
@@ -86,7 +82,6 @@
     border-top: 1px solid #e5e7eb;
     box-shadow: 0 -2px 4px rgba(0,0,0,0.05);
   }
-
   .chat-input input {
     flex-grow: 1;
     padding: 10px 14px;
@@ -96,12 +91,10 @@
     font-size: 14px;
     transition: border 0.2s ease;
   }
-
   .chat-input input:focus {
     border-color: #3b82f6;
     box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
   }
-
   .chat-input button {
     padding: 10px 18px;
     border: none;
@@ -112,87 +105,108 @@
     cursor: pointer;
     transition: background 0.2s ease;
   }
+  .chat-input button:hover { background: #2563eb; }
 
-  .chat-input button:hover {
-    background: #2563eb;
-  }
-
-  /* Modal styles */
-  .modal-overlay {
-    position: fixed;
-    top: 0;
-    left:0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.4);
+  /* Modal for rename */
+  #renameModal {
     display: none;
+    position: fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.5);
     justify-content: center;
     align-items: center;
     z-index: 50;
   }
-
-  .modal {
+  #renameModal .modal-content {
     background: white;
-    padding: 24px;
-    border-radius: 12px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    max-width: 400px;
-    width: 90%;
-    text-align: center;
+    padding: 20px;
+    border-radius: 10px;
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
-
-  .modal input {
-    width: 100%;
-    padding: 10px 12px;
-    margin-bottom: 16px;
+  #renameModal input {
+    padding: 8px 12px;
+    border-radius: 6px;
     border: 1px solid #d1d5db;
-    border-radius: 8px;
     outline: none;
   }
-
-  .modal button {
-    padding: 8px 16px;
+  #renameModal button {
+    padding: 8px 12px;
+    border-radius: 6px;
     border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    margin: 0 6px;
-  }
-
-  .modal .confirm {
     background: #3b82f6;
     color: white;
+    cursor: pointer;
+  }
+  #renameModal button:hover { background: #2563eb; }
+
+  /* Code viewer */
+  #codeViewer {
+    display: none;
+    flex-grow: 1;
+    background: #1e1e1e;
+    color: #f5f5f5;
+    overflow: hidden;
+    flex-direction: column;
+  }
+  #codeTabs {
+    display: flex;
+    border-bottom: 1px solid #3b82f6;
+    background: #111;
+  }
+  #codeTabs button {
+    padding: 8px 12px;
+    border: none;
+    background: #111;
+    color: #f5f5f5;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
+  #codeTabs button.active { background: #3b82f6; }
+  #codeContent {
+    flex-grow:1;
+    overflow:auto;
+    padding: 10px;
+    font-family: monospace;
+    white-space: pre-wrap;
   }
 
-  .modal .confirm:hover {
-    background: #2563eb;
-  }
-
-  .modal .cancel {
-    background: #e5e7eb;
-    color: #374151;
-  }
-
-  .modal .cancel:hover {
-    background: #d1d5db;
+  #previewBtn {
+    display: none;
+    margin-left: 10px;
   }
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <div class="project-name" id="projectName"></div>
-  <div class="buttons">
+  <div>Project: <span id="projectName">Loading...</span></div>
+  <div>
     <button id="regenBtn">⟳ Regenerate</button>
     <button id="renameBtn">✎ Rename</button>
+    <button id="codeBtn">Code</button>
     <button id="backBtn">← Back</button>
+    <button id="previewBtn">Preview</button>
   </div>
 </div>
 
 <!-- Progress bar -->
 <div id="progress-container"><div id="progress-bar"></div></div>
 
-<iframe id="preview" style="display:none;"></iframe>
+<iframe id="preview"></iframe>
+
+<!-- Code viewer -->
+<div id="codeViewer">
+  <div id="codeTabs">
+    <button id="tabHtml" class="active">HTML</button>
+    <button id="tabCss">CSS</button>
+    <button id="tabJs">JS</button>
+  </div>
+  <pre id="codeContent"></pre>
+</div>
 
 <div class="chat-input">
   <input id="ai-chat-input" placeholder="Tell AI to change something...">
@@ -200,157 +214,166 @@
 </div>
 
 <!-- Rename modal -->
-<div class="modal-overlay" id="renameModal">
-  <div class="modal">
-    <h2>Rename Project</h2>
-    <input type="text" id="renameInput" placeholder="New project name">
-    <div>
-      <button class="confirm" id="renameConfirm">Confirm</button>
-      <button class="cancel" id="renameCancel">Cancel</button>
+<div id="renameModal">
+  <div class="modal-content">
+    <input id="renameInput" placeholder="Enter new project name">
+    <div style="display:flex; justify-content:flex-end; gap:10px;">
+      <button id="renameConfirm">Confirm</button>
+      <button id="renameCancel">Cancel</button>
     </div>
   </div>
 </div>
 
 <script>
-const user = localStorage.getItem("ai-user");
-const promptText = localStorage.getItem("ai-prompt");
-if (!user || !promptText) window.location.href = "index.html";
+  // Check login
+  const user = localStorage.getItem("ai-user");
+  const prompt = localStorage.getItem("ai-prompt");
+  if (!user || !prompt) window.location.href = "index.html";
 
-// Load or set project name
-let projectName = localStorage.getItem("ai-project-name") || promptText.substring(0,20);
-const projectNameEl = document.getElementById("projectName");
-projectNameEl.textContent = projectName;
+  const projectNameEl = document.getElementById("projectName");
+  let storedName = localStorage.getItem("ai-project-name") || prompt.substring(0,20);
+  projectNameEl.textContent = storedName;
 
-// Progress bar helper
-function startProgressBar() {
-  const container = document.getElementById("progress-container");
-  const bar = document.getElementById("progress-bar");
-  container.style.display = "block";
-  bar.style.width = "0%";
-  let progress = 0;
-  const interval = setInterval(()=>{
-    if(progress<95){ progress+=5; bar.style.width = progress+"%"; }
-  },5000);
-  return {
-    intervalId: interval,
-    finish: () => {
+  // Code storage
+  let lastHTML = "", lastCSS = "", lastJS = "";
+
+  // Progress bar helper
+  function startProgressBar() {
+    const container = document.getElementById("progress-container");
+    const bar = document.getElementById("progress-bar");
+    container.style.display = "block";
+    bar.style.width = "0%";
+    let progress = 0;
+    const interval = setInterval(()=>{
+      if(progress<95){ progress+=5; bar.style.width=progress+"%"; }
+    },5000);
+    return { intervalId: interval, finish: ()=>{
       clearInterval(interval);
       bar.style.width="100%";
       setTimeout(()=>{ container.style.display="none"; bar.style.width="0%"; },500);
+    }};
+  }
+
+  async function generateSite() {
+    const progress = startProgressBar();
+    try {
+      const res = await fetch("/api/ai-generate", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ prompt })
+      });
+      const data = await res.json();
+
+      // Extract code
+      let htmlMatch = data.output.match(/```html([\s\S]*?)```/i);
+      let cssMatch = data.output.match(/```css([\s\S]*?)```/i);
+      let jsMatch = data.output.match(/```javascript([\s\S]*?)```/i);
+
+      lastHTML = htmlMatch ? htmlMatch[1].trim() : "<h1>No HTML generated</h1>";
+      lastCSS = cssMatch ? cssMatch[1].trim() : "";
+      lastJS = jsMatch ? jsMatch[1].trim() : "";
+
+      // Show in iframe
+      showPreview();
+      progress.finish();
+    } catch(err){
+      console.error(err);
+      progress.finish();
+      alert("Failed to generate website.");
+    }
+  }
+
+  function showPreview() {
+    document.getElementById("preview").style.display="block";
+    document.getElementById("codeViewer").style.display="none";
+    document.getElementById("previewBtn").style.display="none";
+
+    const iframe = document.getElementById("preview");
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open();
+    doc.write(lastHTML);
+    if(lastCSS){ const style=document.createElement("style"); style.textContent=lastCSS; doc.head.appendChild(style);}
+    if(lastJS){ const script=document.createElement("script"); script.textContent=lastJS; doc.body.appendChild(script);}
+    doc.close();
+  }
+
+  function showCode() {
+    document.getElementById("preview").style.display="none";
+    document.getElementById("codeViewer").style.display="flex";
+    document.getElementById("previewBtn").style.display="inline-block";
+    switchTab("HTML");
+  }
+
+  function switchTab(tab){
+    const contentEl = document.getElementById("codeContent");
+    document.getElementById("tabHtml").classList.remove("active");
+    document.getElementById("tabCss").classList.remove("active");
+    document.getElementById("tabJs").classList.remove("active");
+
+    if(tab==="HTML"){ contentEl.textContent = lastHTML; document.getElementById("tabHtml").classList.add("active"); }
+    if(tab==="CSS"){ contentEl.textContent = lastCSS; document.getElementById("tabCss").classList.add("active"); }
+    if(tab==="JS"){ contentEl.textContent = lastJS; document.getElementById("tabJs").classList.add("active"); }
+  }
+
+  generateSite();
+
+  // Chat input
+  document.getElementById("ai-chat-send").addEventListener("click", async ()=>{
+    const instruction = document.getElementById("ai-chat-input").value.trim();
+    if(!instruction) return;
+    const progress = startProgressBar();
+    try {
+      const res = await fetch("/api/ai-generate", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ prompt: `${prompt}\nApply this instruction: ${instruction}` })
+      });
+      const data = await res.json();
+
+      let htmlMatch = data.output.match(/```html([\s\S]*?)```/i);
+      let cssMatch = data.output.match(/```css([\s\S]*?)```/i);
+      let jsMatch = data.output.match(/```javascript([\s\S]*?)```/i);
+
+      lastHTML = htmlMatch ? htmlMatch[1].trim() : "<h1>No HTML generated</h1>";
+      lastCSS = cssMatch ? cssMatch[1].trim() : "";
+      lastJS = jsMatch ? jsMatch[1].trim() : "";
+
+      showPreview();
+      progress.finish();
+    } catch(err){
+      console.error(err);
+      progress.finish();
+      alert("Failed to update site.");
+    }
+  });
+
+  // Topbar buttons
+  document.getElementById("regenBtn").onclick = generateSite;
+  document.getElementById("backBtn").onclick = ()=> window.location.href="index.html";
+  document.getElementById("codeBtn").onclick = showCode;
+  document.getElementById("previewBtn").onclick = showPreview;
+
+  // Tabs
+  document.getElementById("tabHtml").onclick = ()=>switchTab("HTML");
+  document.getElementById("tabCss").onclick = ()=>switchTab("CSS");
+  document.getElementById("tabJs").onclick = ()=>switchTab("JS");
+
+  // Rename modal
+  const renameModal = document.getElementById("renameModal");
+  const renameInput = document.getElementById("renameInput");
+  document.getElementById("renameBtn").onclick = ()=>{
+    renameInput.value = projectNameEl.textContent;
+    renameModal.style.display = "flex";
+  };
+  document.getElementById("renameConfirm").onclick = ()=>{
+    const newName = renameInput.value.trim();
+    if(newName){
+      projectNameEl.textContent = newName;
+      localStorage.setItem("ai-project-name", newName);
+      renameModal.style.display = "none";
     }
   };
-}
-
-// AI site generation
-async function generateSite() {
-  const progress = startProgressBar();
-  try {
-    const res = await fetch("/api/ai-generate", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({ prompt: promptText })
-    });
-    const data = await res.json();
-
-    let htmlMatch = data.output.match(/```html([\s\S]*?)```/i);
-    if (!htmlMatch) {
-      const generic = data.output.match(/```[\w]*\n([\s\S]*?)```/i);
-      if (generic) htmlMatch = [null, generic[1]];
-    }
-    const html = htmlMatch ? htmlMatch[1].trim() : "<h1>No HTML generated</h1>";
-
-    let cssMatch = data.output.match(/```css([\s\S]*?)```/i);
-    let jsMatch = data.output.match(/```javascript([\s\S]*?)```/i);
-
-    const css = cssMatch ? cssMatch[1].trim() : "";
-    const js = jsMatch ? jsMatch[1].trim() : "";
-
-    const iframe = document.getElementById("preview");
-    const doc = iframe.contentDocument || iframe.contentWindow.document;
-    doc.open();
-    doc.write(html);
-    if(css){ const style=document.createElement("style"); style.textContent=css; doc.head.appendChild(style); }
-    if(js){ const script=document.createElement("script"); script.textContent=js; doc.body.appendChild(script); }
-    doc.close();
-    iframe.style.display="block";
-    progress.finish();
-  } catch(err) {
-    console.error(err);
-    progress.finish();
-    alert("Failed to generate website.");
-  }
-}
-
-generateSite();
-
-// Chat input
-document.getElementById("ai-chat-send").addEventListener("click", async()=>{
-  const instruction = document.getElementById("ai-chat-input").value.trim();
-  if(!instruction) return;
-  const progress = startProgressBar();
-  try {
-    const res = await fetch("/api/ai-generate", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({ prompt: `${promptText}\nApply this instruction: ${instruction}` })
-    });
-    const data = await res.json();
-
-    let htmlMatch = data.output.match(/```html([\s\S]*?)```/i);
-    if (!htmlMatch) {
-      const generic = data.output.match(/```[\w]*\n([\s\S]*?)```/i);
-      if (generic) htmlMatch = [null, generic[1]];
-    }
-    const html = htmlMatch ? htmlMatch[1].trim() : "<h1>No HTML generated</h1>";
-
-    let cssMatch = data.output.match(/```css([\s\S]*?)```/i);
-    let jsMatch = data.output.match(/```javascript([\s\S]*?)```/i);
-
-    const css = cssMatch ? cssMatch[1].trim() : "";
-    const js = jsMatch ? jsMatch[1].trim() : "";
-
-    const iframe = document.getElementById("preview");
-    const doc = iframe.contentDocument || iframe.contentWindow.document;
-    doc.open();
-    doc.write(html);
-    if(css){ const style=document.createElement("style"); style.textContent=css; doc.head.appendChild(style); }
-    if(js){ const script=document.createElement("script"); script.textContent=js; doc.body.appendChild(script); }
-    doc.close();
-    progress.finish();
-  } catch(err) {
-    console.error(err);
-    progress.finish();
-    alert("Failed to update site.");
-  }
-});
-
-// Buttons
-document.getElementById("regenBtn").onclick = generateSite;
-document.getElementById("backBtn").onclick = () => window.location.href = "index.html";
-
-// Rename modal logic
-const renameBtn = document.getElementById("renameBtn");
-const modal = document.getElementById("renameModal");
-const renameInput = document.getElementById("renameInput");
-const renameConfirm = document.getElementById("renameConfirm");
-const renameCancel = document.getElementById("renameCancel");
-
-renameBtn.onclick = () => {
-  renameInput.value = projectNameEl.textContent;
-  modal.style.display = "flex";
-  renameInput.focus();
-};
-
-renameConfirm.onclick = () => {
-  const newName = renameInput.value.trim();
-  if(newName){
-    projectNameEl.textContent = newName;
-    localStorage.setItem("ai-project-name", newName);
-    modal.style.display = "none";
-  }
-};
-
-renameCancel.onclick = () => modal.style.display = "none";
+  document.getElementById("renameCancel").onclick = ()=> renameModal.style.display="none";
 </script>
 </body>
 </html>
