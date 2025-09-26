@@ -1,64 +1,184 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Charmly Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-  /* ... include all your dashboard CSS ... */
-  #progress-container{position:relative;width:100%;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;margin-top:0;display:none;}
-  #progress-bar{width:0%;height:100%;background:linear-gradient(90deg,#0b3d91,#3b82f6);transition:width 1s ease-in-out;border-radius:4px;}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Charmly Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: #f9fafb;
+      color: #111827;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 20px;
+      background: white;
+      border-bottom: 1px solid #e5e7eb;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .topbar div {
+      font-weight: 600;
+      font-size: 16px;
+      color: #374151;
+    }
+
+    .topbar button {
+      margin-left: 10px;
+      padding: 6px 14px;
+      border: none;
+      border-radius: 8px;
+      background: #3b82f6;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    .topbar button:hover {
+      background: #2563eb;
+    }
+
+    /* Progress bar */
+    #progress-container {
+      position: relative;
+      width: 100%;
+      height: 6px;
+      background: #e5e7eb;
+      border-radius: 3px;
+      overflow: hidden;
+      margin: 0;
+      display: none;
+    }
+    #progress-bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #0b3d91, #3b82f6);
+      transition: width 0.3s ease-in-out;
+      border-radius: 3px;
+    }
+
+    iframe#preview {
+      flex-grow: 1;
+      border: none;
+      width: 100%;
+      background: white;
+    }
+
+    .chat-input {
+      display: flex;
+      gap: 10px;
+      padding: 12px 20px;
+      background: #fff;
+      border-top: 1px solid #e5e7eb;
+      box-shadow: 0 -2px 4px rgba(0,0,0,0.05);
+    }
+    .chat-input input {
+      flex-grow: 1;
+      padding: 10px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      outline: none;
+      font-size: 14px;
+      transition: border 0.2s ease;
+    }
+    .chat-input input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
+    }
+    .chat-input button {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      background: #3b82f6;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    .chat-input button:hover {
+      background: #2563eb;
+    }
+  </style>
 </head>
 <body>
 
-<div class="topbar">
-  <div>Project: <span id="projectName">Loading...</span></div>
-  <button id="regenBtn">Regenerate</button>
-  <button id="renameBtn">Rename</button>
-</div>
+  <div class="topbar">
+    <div>Project: <span id="projectName">Loading...</span></div>
+    <div>
+      <button id="regenBtn">⟳ Regenerate</button>
+      <button id="renameBtn">✎ Rename</button>
+    </div>
+  </div>
 
-<!-- Progress bar -->
-<div id="progress-container"><div id="progress-bar"></div></div>
+  <!-- Progress bar -->
+  <div id="progress-container"><div id="progress-bar"></div></div>
 
-<iframe id="preview" style="width:100%;height:80vh;display:none;"></iframe>
+  <iframe id="preview" style="display:none;"></iframe>
 
-<div class="chat-input">
-  <input id="ai-chat-input" placeholder="Tell AI to change something...">
-  <button id="ai-chat-send">Send</button>
-</div>
+  <div class="chat-input">
+    <input id="ai-chat-input" placeholder="Tell AI to change something...">
+    <button id="ai-chat-send">Send</button>
+  </div>
 
-<script>
+  <!-- Your JS stays untouched -->
+ <script>
   // Check login
   const user = localStorage.getItem("ai-user");
   const prompt = localStorage.getItem("ai-prompt");
-  if(!user || !prompt){ window.location.href="index.html"; }
-
-  document.getElementById("projectName").textContent = prompt.substring(0,20);
-
-  // Progress bar helper
-  function startProgressBar(){
-    const container = document.getElementById("progress-container");
-    const bar = document.getElementById("progress-bar");
-    container.style.display="block";
-    bar.style.width="0%";
-    let progress = 0;
-    const interval = setInterval(()=>{
-      if(progress<95){ progress+=5; bar.style.width=progress+"%"; }
-    },5000);
-    return { intervalId:interval, finish:()=>{ clearInterval(interval); bar.style.width="100%"; setTimeout(()=>{container.style.display="none"; bar.style.width="0%"; },500); } };
+  if (!user || !prompt) {
+    window.location.href = "index.html";
   }
 
-  async function generateSite(){
+  document.getElementById("projectName").textContent = prompt.substring(0, 20);
+
+  // Progress bar helper
+  function startProgressBar() {
+    const container = document.getElementById("progress-container");
+    const bar = document.getElementById("progress-bar");
+    container.style.display = "block";
+    bar.style.width = "0%";
+    let progress = 0;
+    const interval = setInterval(() => {
+      if (progress < 95) {
+        progress += 5;
+        bar.style.width = progress + "%";
+      }
+    }, 5000);
+    return {
+      intervalId: interval,
+      finish: () => {
+        clearInterval(interval);
+        bar.style.width = "100%";
+        setTimeout(() => {
+          container.style.display = "none";
+          bar.style.width = "0%";
+        }, 500);
+      },
+    };
+  }
+
+  async function generateSite() {
     const progress = startProgressBar();
-    try{
-      const res = await fetch("/api/ai-generate",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({prompt})
+    try {
+      const res = await fetch("/api/ai-generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
       });
       const data = await res.json();
+
       const htmlMatch = data.output.match(/```html([\s\S]*?)```/i);
       const cssMatch = data.output.match(/```css([\s\S]*?)```/i);
       const jsMatch = data.output.match(/```javascript([\s\S]*?)```/i);
@@ -71,51 +191,79 @@
       const doc = iframe.contentDocument || iframe.contentWindow.document;
       doc.open();
       doc.write(html);
-      if(css){ const style=document.createElement("style"); style.textContent=css; doc.head.appendChild(style); }
-      if(js){ const script=document.createElement("script"); script.textContent=js; doc.body.appendChild(script); }
+      if (css) {
+        const style = document.createElement("style");
+        style.textContent = css;
+        doc.head.appendChild(style);
+      }
+      if (js) {
+        const script = document.createElement("script");
+        script.textContent = js;
+        doc.body.appendChild(script);
+      }
       doc.close();
-      iframe.style.display="block";
+      iframe.style.display = "block";
       progress.finish();
-    }catch(err){ console.error(err); progress.finish(); alert("Failed to generate website."); }
+    } catch (err) {
+      console.error(err);
+      progress.finish();
+      alert("Failed to generate website.");
+    }
   }
 
   generateSite();
 
   // Chat input
-  document.getElementById("ai-chat-send").addEventListener("click", async()=>{
+  document.getElementById("ai-chat-send").addEventListener("click", async () => {
     const instruction = document.getElementById("ai-chat-input").value.trim();
-    if(!instruction) return;
+    if (!instruction) return;
     const progress = startProgressBar();
-    try{
-      const res = await fetch("/api/ai-generate",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ prompt: `${prompt}\nApply this instruction: ${instruction}` })
+    try {
+      const res = await fetch("/api/ai-generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: `${prompt}\nApply this instruction: ${instruction}` }),
       });
       const data = await res.json();
+
       const htmlMatch = data.output.match(/```html([\s\S]*?)```/i);
       const cssMatch = data.output.match(/```css([\s\S]*?)```/i);
       const jsMatch = data.output.match(/```javascript([\s\S]*?)```/i);
+
       const html = htmlMatch ? htmlMatch[1].trim() : "<h1>No HTML generated</h1>";
       const css = cssMatch ? cssMatch[1].trim() : "";
       const js = jsMatch ? jsMatch[1].trim() : "";
+
       const iframe = document.getElementById("preview");
       const doc = iframe.contentDocument || iframe.contentWindow.document;
       doc.open();
       doc.write(html);
-      if(css){ const style=document.createElement("style"); style.textContent=css; doc.head.appendChild(style); }
-      if(js){ const script=document.createElement("script"); script.textContent=js; doc.body.appendChild(script); }
+      if (css) {
+        const style = document.createElement("style");
+        style.textContent = css;
+        doc.head.appendChild(style);
+      }
+      if (js) {
+        const script = document.createElement("script");
+        script.textContent = js;
+        doc.body.appendChild(script);
+      }
       doc.close();
       progress.finish();
-    }catch(err){ console.error(err); progress.finish(); alert("Failed to update site."); }
+    } catch (err) {
+      console.error(err);
+      progress.finish();
+      alert("Failed to update site.");
+    }
   });
 
   // Regenerate / Rename buttons
   document.getElementById("regenBtn").onclick = generateSite;
-  document.getElementById("renameBtn").onclick = ()=>{
+  document.getElementById("renameBtn").onclick = () => {
     const newName = prompt("Enter new project name:", prompt);
-    if(newName) document.getElementById("projectName").textContent=newName;
+    if (newName) document.getElementById("projectName").textContent = newName;
   };
 </script>
+
 </body>
 </html>
