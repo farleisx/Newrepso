@@ -23,20 +23,19 @@
   .chat-input button { padding:10px 18px; border:none; border-radius:8px; background:#3b82f6; color:white; font-weight:600; cursor:pointer; transition:background 0.2s ease; }
   .chat-input button:hover { background:#2563eb; }
 
-  /* Rename modal */
   #renameModal { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:50; }
   #renameModal .modal-content { background:white; padding:20px; border-radius:10px; width:300px; display:flex; flex-direction:column; gap:10px; }
   #renameModal input { padding:8px 12px; border-radius:6px; border:1px solid #d1d5db; outline:none; }
   #renameModal button { padding:8px 12px; border-radius:6px; border:none; background:#3b82f6; color:white; cursor:pointer; }
   #renameModal button:hover { background:#2563eb; }
 
-  /* Code viewer */
   #codeViewer { display:none; flex-grow:1; background:#1e1e1e; color:#f5f5f5; overflow:hidden; flex-direction:column; }
-  #codeTabs { display:flex; border-bottom:1px solid #3b82f6; background:#111; overflow-x:auto; }
-  #codeTabs button { padding:8px 12px; border:none; background:#111; color:#f5f5f5; cursor:pointer; font-weight:600; transition:background 0.2s; }
+  #codeTabs { display:flex; border-bottom:1px solid #3b82f6; background:#111; flex-wrap:wrap; }
+  #codeTabs button { padding:8px 12px; border:none; background:#111; color:#f5f5f5; cursor:pointer; font-weight:600; transition:background 0.2s; margin-right:2px; margin-bottom:2px; }
   #codeTabs button.active { background:#3b82f6; }
   #codeContent { flex-grow:1; overflow:auto; padding:10px; font-family:monospace; white-space:pre-wrap; }
-  #previewBtn { display:none; margin-left:10px; }
+
+  #previewBtn { display:inline-block; margin-left:10px; }
 </style>
 </head>
 <body>
@@ -47,8 +46,8 @@
     <button id="regenBtn">⟳ Regenerate</button>
     <button id="renameBtn">✎ Rename</button>
     <button id="codeBtn">Code</button>
-    <button id="backBtn">← Back</button>
     <button id="previewBtn">Preview</button>
+    <button id="backBtn">← Back</button>
   </div>
 </div>
 
@@ -77,17 +76,15 @@
 </div>
 
 <script>
-  // Check login
   const user = localStorage.getItem("ai-user");
   const prompt = localStorage.getItem("ai-prompt");
-  if(!user || !prompt) window.location.href="index.html";
+  if(!user||!prompt) window.location.href="index.html";
 
   const projectNameEl = document.getElementById("projectName");
   let storedName = localStorage.getItem("ai-project-name") || prompt.substring(0,20);
   projectNameEl.textContent = storedName;
 
-  // Store generated files
-  let lastFiles = {}; // { "landing.html": "code...", "dashboard.html": "code...", "server.js": "..." }
+  let codeData = {}; // key: language, value: code
 
   function startProgressBar(){
     const container = document.getElementById("progress-container");
@@ -97,138 +94,97 @@
     const interval=setInterval(()=>{
       if(progress<95){ progress+=5; bar.style.width=progress+"%"; }
     },5000);
-    return { intervalId:interval, finish:()=>{
-      clearInterval(interval);
-      bar.style.width="100%";
-      setTimeout(()=>{ container.style.display="none"; bar.style.width="0%"; },500);
-    }};
+    return { intervalId:interval, finish:()=>{ clearInterval(interval); bar.style.width="100%";
+      setTimeout(()=>{ container.style.display="none"; bar.style.width="0%"; },500); }};
   }
 
-  async function generateSite() {
-    const progress = startProgressBar();
-    try {
-      const res = await fetch("/api/ai-generate", {
-        method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({prompt})
-      });
-      const data = await res.json();
+  async function generateSite(){
+    const progress=startProgressBar();
+    try{
+      const res=await fetch("/api/ai-generate",{method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({prompt})});
+      const data=await res.json();
 
-      // Extract all files in markdown ```filename.ext
-      const fileRegex = /```([\w\-.]+)\s*([\s\S]*?)```/g;
+      // parse all code blocks
+      const regex = /```(\w+)[\s\S]*?```/gi;
       let match;
-      lastFiles={};
-      while(match=fileRegex.exec(data.output)){
-        const name = match[1].trim();
-        const code = match[2].trim();
-        lastFiles[name]=code;
+      codeData={};
+      while((match=regex.exec(data.output))!==null){
+        let lang=match[1].trim();
+        codeData[lang]=match[0].replace(/```/g,'').trim();
       }
 
       showPreview();
       progress.finish();
-    } catch(err){
-      console.error(err);
-      progress.finish();
-      alert("Failed to generate website.");
-    }
+    }catch(err){ console.error(err); progress.finish(); alert("Failed to generate website."); }
   }
 
-  function showPreview() {
-    const iframe=document.getElementById("preview");
-    iframe.style.display="block";
+  function showPreview(){
+    document.getElementById("preview").style.display="block";
     document.getElementById("codeViewer").style.display="none";
-    document.getElementById("previewBtn").style.display="none";
 
-    const htmlFile = Object.keys(lastFiles).find(f=>f.endsWith(".html"));
-    if(!htmlFile) return;
+    const iframe = document.getElementById("preview");
     const doc = iframe.contentDocument || iframe.contentWindow.document;
     doc.open();
-    doc.write(lastFiles[htmlFile]);
+    if(codeData.html) doc.write(codeData.html);
     doc.close();
   }
 
-  function showCode() {
+  function showCode(){
     document.getElementById("preview").style.display="none";
-    const codeViewer = document.getElementById("codeViewer");
-    codeViewer.style.display="flex";
-    document.getElementById("previewBtn").style.display="inline-block";
-
-    const codeTabsEl = document.getElementById("codeTabs");
-    codeTabsEl.innerHTML="";
-    const firstFile = Object.keys(lastFiles)[0];
-    for(const fname in lastFiles){
-      const btn = document.createElement("button");
-      btn.textContent=fname;
-      if(fname===firstFile) btn.classList.add("active");
-      btn.onclick=()=>switchFile(fname);
-      codeTabsEl.appendChild(btn);
-    }
-    switchFile(firstFile);
+    document.getElementById("codeViewer").style.display="flex";
+    const tabsEl = document.getElementById("codeTabs");
+    tabsEl.innerHTML="";
+    Object.keys(codeData).forEach(lang=>{
+      const btn=document.createElement("button");
+      btn.textContent=lang.toUpperCase();
+      btn.onclick=()=>{ switchTab(lang); };
+      tabsEl.appendChild(btn);
+    });
+    const firstLang = Object.keys(codeData)[0];
+    if(firstLang) switchTab(firstLang);
   }
 
-  function switchFile(fname){
-    const codeContent = document.getElementById("codeContent");
-    codeContent.textContent = lastFiles[fname] || "";
-    const buttons = document.getElementById("codeTabs").children;
-    for(let b of buttons) b.classList.remove("active");
-    for(let b of buttons) if(b.textContent===fname) b.classList.add("active");
-
-    // Show preview only if html
-    document.getElementById("previewBtn").style.display=fname.endsWith(".html")?"inline-block":"none";
+  function switchTab(lang){
+    document.querySelectorAll("#codeTabs button").forEach(btn=>{ btn.classList.remove("active"); if(btn.textContent.toLowerCase()===lang) btn.classList.add("active"); });
+    document.getElementById("codeContent").textContent=codeData[lang]||"";
   }
 
   generateSite();
 
-  // Chat input
-  document.getElementById("ai-chat-send").addEventListener("click",async ()=>{
+  // Chat
+  document.getElementById("ai-chat-send").addEventListener("click", async ()=>{
     const instruction=document.getElementById("ai-chat-input").value.trim();
     if(!instruction) return;
-    const progress = startProgressBar();
-    try {
-      const res = await fetch("/api/ai-generate",{
-        method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ prompt:`${prompt}\nApply this instruction: ${instruction}` })
-      });
-      const data = await res.json();
-
-      const fileRegex = /```([\w\-.]+)\s*([\s\S]*?)```/g;
-      let match;
-      lastFiles={};
-      while(match=fileRegex.exec(data.output)){
-        const name = match[1].trim();
-        const code = match[2].trim();
-        lastFiles[name]=code;
+    const progress=startProgressBar();
+    try{
+      const res=await fetch("/api/ai-generate",{method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ prompt:`${prompt}\nApply this instruction: ${instruction}` })});
+      const data=await res.json();
+      const regex=/```(\w+)[\s\S]*?```/gi;
+      let match; codeData={};
+      while((match=regex.exec(data.output))!==null){
+        let lang=match[1].trim();
+        codeData[lang]=match[0].replace(/```/g,'').trim();
       }
-
       showPreview();
       progress.finish();
-    } catch(err){
-      console.error(err);
-      progress.finish();
-      alert("Failed to update site.");
-    }
+    }catch(err){ console.error(err); progress.finish(); alert("Failed to update site."); }
   });
 
-  // Topbar buttons
-  document.getElementById("regenBtn").onclick = generateSite;
-  document.getElementById("backBtn").onclick = ()=> window.location.href="index.html";
-  document.getElementById("codeBtn").onclick = showCode;
-  document.getElementById("previewBtn").onclick = showPreview;
+  document.getElementById("regenBtn").onclick=generateSite;
+  document.getElementById("backBtn").onclick=()=>window.location.href="index.html";
+  document.getElementById("codeBtn").onclick=showCode;
+  document.getElementById("previewBtn").onclick=showPreview;
 
   // Rename modal
-  const renameModal = document.getElementById("renameModal");
-  const renameInput = document.getElementById("renameInput");
-  document.getElementById("renameBtn").onclick = ()=>{
-    renameInput.value=projectNameEl.textContent;
-    renameModal.style.display="flex";
-  };
-  document.getElementById("renameConfirm").onclick = ()=>{
+  const renameModal=document.getElementById("renameModal");
+  const renameInput=document.getElementById("renameInput");
+  document.getElementById("renameBtn").onclick=()=>{ renameInput.value=projectNameEl.textContent; renameModal.style.display="flex"; };
+  document.getElementById("renameConfirm").onclick=()=>{
     const newName=renameInput.value.trim();
-    if(newName){
-      projectNameEl.textContent=newName;
-      localStorage.setItem("ai-project-name", newName);
-      renameModal.style.display="none";
-    }
+    if(newName){ projectNameEl.textContent=newName; localStorage.setItem("ai-project-name", newName); renameModal.style.display="none"; }
   };
-  document.getElementById("renameCancel").onclick = ()=> renameModal.style.display="none";
-</script>
+  document.getElementById("renameCancel").onclick=()=> renameModal.style.display="none";
 
+</script>
 </body>
 </html>
