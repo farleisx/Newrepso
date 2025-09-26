@@ -6,36 +6,152 @@
 <title>Charmly Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  body { margin:0; font-family:'Inter',sans-serif; background:#f9fafb; color:#111827; display:flex; flex-direction:column; height:100vh; }
-  .topbar { display:flex; justify-content:space-between; align-items:center; padding:12px 20px; background:white; border-bottom:1px solid #e5e7eb; box-shadow:0 2px 4px rgba(0,0,0,0.05); position:sticky; top:0; z-index:10; }
-  .topbar div span { font-weight:600; font-size:16px; color:#374151; }
-  .topbar button { margin-left:10px; padding:6px 14px; border:none; border-radius:8px; background:#3b82f6; color:white; font-weight:600; cursor:pointer; transition:background 0.2s ease; }
-  .topbar button:hover { background:#2563eb; }
+  body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background: #f9fafb;
+    color: #111827;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .topbar div span {
+    font-weight: 600;
+    font-size: 16px;
+    color: #374151;
+  }
+  .topbar button {
+    margin-left: 10px;
+    padding: 6px 14px;
+    border: none;
+    border-radius: 8px;
+    background: #3b82f6;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .topbar button:hover { background: #2563eb; }
 
-  #progress-container { position:relative; width:100%; height:6px; background:#e5e7eb; border-radius:3px; overflow:hidden; margin:0; display:none; }
-  #progress-bar { width:0%; height:100%; background:linear-gradient(90deg,#0b3d91,#3b82f6); transition:width 0.3s ease-in-out; border-radius:3px; }
+  /* Progress bar */
+  #progress-container {
+    position: relative;
+    width: 100%;
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 0;
+    display: none;
+  }
+  #progress-bar {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #0b3d91, #3b82f6);
+    transition: width 0.3s ease-in-out;
+    border-radius: 3px;
+  }
 
-  iframe#preview { flex-grow:1; border:none; width:100%; background:white; }
+  iframe#preview {
+    flex-grow: 1;
+    border: none;
+    width: 100%;
+    background: white;
+  }
 
-  .chat-input { display:flex; gap:10px; padding:12px 20px; background:#fff; border-top:1px solid #e5e7eb; box-shadow:0 -2px 4px rgba(0,0,0,0.05); }
-  .chat-input input { flex-grow:1; padding:10px 14px; border:1px solid #d1d5db; border-radius:8px; outline:none; font-size:14px; transition:border 0.2s ease; }
-  .chat-input input:focus { border-color:#3b82f6; box-shadow:0 0 0 2px rgba(59,130,246,0.2); }
-  .chat-input button { padding:10px 18px; border:none; border-radius:8px; background:#3b82f6; color:white; font-weight:600; cursor:pointer; transition:background 0.2s ease; }
-  .chat-input button:hover { background:#2563eb; }
+  .chat-input {
+    display: flex;
+    gap: 10px;
+    padding: 12px 20px;
+    background: #fff;
+    border-top: 1px solid #e5e7eb;
+    box-shadow: 0 -2px 4px rgba(0,0,0,0.05);
+  }
+  .chat-input input {
+    flex-grow: 1;
+    padding: 10px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    outline: none;
+    font-size: 14px;
+    transition: border 0.2s ease;
+  }
+  .chat-input input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
+  }
+  .chat-input button {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    background: #3b82f6;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .chat-input button:hover { background: #2563eb; }
 
-  #renameModal { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:50; }
-  #renameModal .modal-content { background:white; padding:20px; border-radius:10px; width:300px; display:flex; flex-direction:column; gap:10px; }
-  #renameModal input { padding:8px 12px; border-radius:6px; border:1px solid #d1d5db; outline:none; }
-  #renameModal button { padding:8px 12px; border-radius:6px; border:none; background:#3b82f6; color:white; cursor:pointer; }
-  #renameModal button:hover { background:#2563eb; }
+  /* Rename modal */
+  #renameModal {
+    display: none;
+    position: fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 50;
+  }
+  #renameModal .modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  #renameModal input {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    outline: none;
+  }
+  #renameModal button {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    background: #3b82f6;
+    color: white;
+    cursor: pointer;
+  }
+  #renameModal button:hover { background: #2563eb; }
 
-  #codeViewer { display:none; flex-grow:1; background:#1e1e1e; color:#f5f5f5; overflow:hidden; flex-direction:column; }
-  #codeTabs { display:flex; border-bottom:1px solid #3b82f6; background:#111; flex-wrap:wrap; }
-  #codeTabs button { padding:8px 12px; border:none; background:#111; color:#f5f5f5; cursor:pointer; font-weight:600; transition:background 0.2s; margin-right:2px; margin-bottom:2px; }
-  #codeTabs button.active { background:#3b82f6; }
-  #codeContent { flex-grow:1; overflow:auto; padding:10px; font-family:monospace; white-space:pre-wrap; }
+  /* Code viewer */
+  #codeViewer {
+    display: none;
+    flex-grow: 1;
+    background: #1e1e1e;
+    color: #f5f5f5;
+    overflow: auto;
+    font-family: monospace;
+    padding: 10px;
+    white-space: pre-wrap;
+  }
 
-  #previewBtn { display:inline-block; margin-left:10px; }
+  #previewBtn { display: none; margin-left: 10px; }
 </style>
 </head>
 <body>
@@ -46,25 +162,23 @@
     <button id="regenBtn">⟳ Regenerate</button>
     <button id="renameBtn">✎ Rename</button>
     <button id="codeBtn">Code</button>
-    <button id="previewBtn">Preview</button>
     <button id="backBtn">← Back</button>
+    <button id="previewBtn">Preview</button>
   </div>
 </div>
 
+<!-- Progress bar -->
 <div id="progress-container"><div id="progress-bar"></div></div>
 
 <iframe id="preview"></iframe>
-
-<div id="codeViewer">
-  <div id="codeTabs"></div>
-  <pre id="codeContent"></pre>
-</div>
+<div id="codeViewer"></div>
 
 <div class="chat-input">
   <input id="ai-chat-input" placeholder="Tell AI to change something...">
   <button id="ai-chat-send">Send</button>
 </div>
 
+<!-- Rename modal -->
 <div id="renameModal">
   <div class="modal-content">
     <input id="renameInput" placeholder="Enter new project name">
@@ -76,115 +190,97 @@
 </div>
 
 <script>
-  const user = localStorage.getItem("ai-user");
-  const prompt = localStorage.getItem("ai-prompt");
-  if(!user||!prompt) window.location.href="index.html";
+const user = localStorage.getItem("ai-user");
+const prompt = localStorage.getItem("ai-prompt");
+if (!user || !prompt) window.location.href="index.html";
 
-  const projectNameEl = document.getElementById("projectName");
-  let storedName = localStorage.getItem("ai-project-name") || prompt.substring(0,20);
-  projectNameEl.textContent = storedName;
+const projectNameEl = document.getElementById("projectName");
+let storedName = localStorage.getItem("ai-project-name") || prompt.substring(0,20);
+projectNameEl.textContent = storedName;
 
-  let codeData = {}; // key: language, value: code
+let lastHTML = "";
 
-  function startProgressBar(){
-    const container = document.getElementById("progress-container");
-    const bar = document.getElementById("progress-bar");
-    container.style.display="block"; bar.style.width="0%";
-    let progress=0;
-    const interval=setInterval(()=>{
-      if(progress<95){ progress+=5; bar.style.width=progress+"%"; }
-    },5000);
-    return { intervalId:interval, finish:()=>{ clearInterval(interval); bar.style.width="100%";
-      setTimeout(()=>{ container.style.display="none"; bar.style.width="0%"; },500); }};
+// Progress bar helper
+function startProgressBar() {
+  const container = document.getElementById("progress-container");
+  const bar = document.getElementById("progress-bar");
+  container.style.display="block";
+  bar.style.width="0%";
+  let progress=0;
+  const interval=setInterval(()=>{ if(progress<95){progress+=5; bar.style.width=progress+"%";} },5000);
+  return { intervalId:interval, finish:()=>{ clearInterval(interval); bar.style.width="100%"; setTimeout(()=>{ container.style.display="none"; bar.style.width="0%";},500); }};
+}
+
+async function generateSite() {
+  const progress=startProgressBar();
+  try{
+    const res=await fetch("/api/ai-generate",{ method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({prompt})});
+    const data=await res.json();
+    let htmlMatch=data.output.match(/```html([\s\S]*?)```/i);
+    lastHTML = htmlMatch ? htmlMatch[1].trim() : "<h1>No HTML generated</h1>";
+    showPreview();
+    progress.finish();
+  }catch(err){ console.error(err); progress.finish(); alert("Failed to generate website."); }
+}
+
+function showPreview(){
+  document.getElementById("preview").style.display="block";
+  document.getElementById("codeViewer").style.display="none";
+  document.getElementById("previewBtn").style.display="none";
+  const iframe=document.getElementById("preview");
+  const doc=iframe.contentDocument || iframe.contentWindow.document;
+  doc.open();
+  doc.write(lastHTML);
+  doc.close();
+}
+
+function showCode(){
+  document.getElementById("preview").style.display="none";
+  document.getElementById("codeViewer").style.display="block";
+  document.getElementById("previewBtn").style.display="inline-block";
+  document.getElementById("codeViewer").textContent = lastHTML;
+}
+
+generateSite();
+
+// Chat input
+document.getElementById("ai-chat-send").addEventListener("click", async ()=>{
+  const instruction=document.getElementById("ai-chat-input").value.trim();
+  if(!instruction) return;
+  const progress=startProgressBar();
+  try{
+    const res=await fetch("/api/ai-generate",{ method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ prompt: `${prompt}\nApply this instruction: ${instruction}` }) });
+    const data=await res.json();
+    let htmlMatch=data.output.match(/```html([\s\S]*?)```/i);
+    lastHTML = htmlMatch ? htmlMatch[1].trim() : "<h1>No HTML generated</h1>";
+    showPreview();
+    progress.finish();
+  }catch(err){ console.error(err); progress.finish(); alert("Failed to update site."); }
+});
+
+// Topbar buttons
+document.getElementById("regenBtn").onclick=generateSite;
+document.getElementById("backBtn").onclick=()=> window.location.href="index.html";
+document.getElementById("codeBtn").onclick=showCode;
+document.getElementById("previewBtn").onclick=showPreview;
+
+// Rename modal
+const renameModal=document.getElementById("renameModal");
+const renameInput=document.getElementById("renameInput");
+document.getElementById("renameBtn").onclick=()=>{
+  renameInput.value = projectNameEl.textContent;
+  renameModal.style.display="flex";
+};
+document.getElementById("renameConfirm").onclick=()=>{
+  const newName=renameInput.value.trim();
+  if(newName){
+    projectNameEl.textContent=newName;
+    localStorage.setItem("ai-project-name", newName);
+    renameModal.style.display="none";
   }
-
-  async function generateSite(){
-    const progress=startProgressBar();
-    try{
-      const res=await fetch("/api/ai-generate",{method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({prompt})});
-      const data=await res.json();
-
-      // parse all code blocks
-      const regex = /```(\w+)[\s\S]*?```/gi;
-      let match;
-      codeData={};
-      while((match=regex.exec(data.output))!==null){
-        let lang=match[1].trim();
-        codeData[lang]=match[0].replace(/```/g,'').trim();
-      }
-
-      showPreview();
-      progress.finish();
-    }catch(err){ console.error(err); progress.finish(); alert("Failed to generate website."); }
-  }
-
-  function showPreview(){
-    document.getElementById("preview").style.display="block";
-    document.getElementById("codeViewer").style.display="none";
-
-    const iframe = document.getElementById("preview");
-    const doc = iframe.contentDocument || iframe.contentWindow.document;
-    doc.open();
-    if(codeData.html) doc.write(codeData.html);
-    doc.close();
-  }
-
-  function showCode(){
-    document.getElementById("preview").style.display="none";
-    document.getElementById("codeViewer").style.display="flex";
-    const tabsEl = document.getElementById("codeTabs");
-    tabsEl.innerHTML="";
-    Object.keys(codeData).forEach(lang=>{
-      const btn=document.createElement("button");
-      btn.textContent=lang.toUpperCase();
-      btn.onclick=()=>{ switchTab(lang); };
-      tabsEl.appendChild(btn);
-    });
-    const firstLang = Object.keys(codeData)[0];
-    if(firstLang) switchTab(firstLang);
-  }
-
-  function switchTab(lang){
-    document.querySelectorAll("#codeTabs button").forEach(btn=>{ btn.classList.remove("active"); if(btn.textContent.toLowerCase()===lang) btn.classList.add("active"); });
-    document.getElementById("codeContent").textContent=codeData[lang]||"";
-  }
-
-  generateSite();
-
-  // Chat
-  document.getElementById("ai-chat-send").addEventListener("click", async ()=>{
-    const instruction=document.getElementById("ai-chat-input").value.trim();
-    if(!instruction) return;
-    const progress=startProgressBar();
-    try{
-      const res=await fetch("/api/ai-generate",{method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ prompt:`${prompt}\nApply this instruction: ${instruction}` })});
-      const data=await res.json();
-      const regex=/```(\w+)[\s\S]*?```/gi;
-      let match; codeData={};
-      while((match=regex.exec(data.output))!==null){
-        let lang=match[1].trim();
-        codeData[lang]=match[0].replace(/```/g,'').trim();
-      }
-      showPreview();
-      progress.finish();
-    }catch(err){ console.error(err); progress.finish(); alert("Failed to update site."); }
-  });
-
-  document.getElementById("regenBtn").onclick=generateSite;
-  document.getElementById("backBtn").onclick=()=>window.location.href="index.html";
-  document.getElementById("codeBtn").onclick=showCode;
-  document.getElementById("previewBtn").onclick=showPreview;
-
-  // Rename modal
-  const renameModal=document.getElementById("renameModal");
-  const renameInput=document.getElementById("renameInput");
-  document.getElementById("renameBtn").onclick=()=>{ renameInput.value=projectNameEl.textContent; renameModal.style.display="flex"; };
-  document.getElementById("renameConfirm").onclick=()=>{
-    const newName=renameInput.value.trim();
-    if(newName){ projectNameEl.textContent=newName; localStorage.setItem("ai-project-name", newName); renameModal.style.display="none"; }
-  };
-  document.getElementById("renameCancel").onclick=()=> renameModal.style.display="none";
-
+};
+document.getElementById("renameCancel").onclick=()=> renameModal.style.display="none";
 </script>
+
 </body>
 </html>
