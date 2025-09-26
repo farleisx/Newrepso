@@ -119,6 +119,7 @@
     <div>
       <button id="regenBtn">⟳ Regenerate</button>
       <button id="renameBtn">✎ Rename</button>
+      <button id="backBtn">← Back</button>
     </div>
   </div>
 
@@ -132,150 +133,152 @@
     <button id="ai-chat-send">Send</button>
   </div>
 
-  <!-- Your JS stays untouched -->
- <script>
-  // Check login
-  const user = localStorage.getItem("ai-user");
-  const prompt = localStorage.getItem("ai-prompt");
-  if (!user || !prompt) {
-    window.location.href = "index.html";
-  }
+  <script>
+    // Check login
+    const user = localStorage.getItem("ai-user");
+    const userPrompt = localStorage.getItem("ai-prompt");
+    if (!user || !userPrompt) {
+      window.location.href = "index.html";
+    }
 
-  // Load stored project name or fallback to prompt substring
-  let storedName = localStorage.getItem("ai-project-name");
-  if (!storedName) {
-    storedName = prompt.substring(0, 20);
-    localStorage.setItem("ai-project-name", storedName);
-  }
-  document.getElementById("projectName").textContent = storedName;
+    // Load stored project name or fallback
+    let storedName = localStorage.getItem("ai-project-name");
+    if (!storedName) {
+      storedName = userPrompt.substring(0, 20);
+      localStorage.setItem("ai-project-name", storedName);
+    }
+    document.getElementById("projectName").textContent = storedName;
 
-  // Progress bar helper
-  function startProgressBar() {
-    const container = document.getElementById("progress-container");
-    const bar = document.getElementById("progress-bar");
-    container.style.display = "block";
-    bar.style.width = "0%";
-    let progress = 0;
-    const interval = setInterval(() => {
-      if (progress < 95) {
-        progress += 5;
-        bar.style.width = progress + "%";
+    // Progress bar helper
+    function startProgressBar() {
+      const container = document.getElementById("progress-container");
+      const bar = document.getElementById("progress-bar");
+      container.style.display = "block";
+      bar.style.width = "0%";
+      let progress = 0;
+      const interval = setInterval(() => {
+        if (progress < 95) {
+          progress += 5;
+          bar.style.width = progress + "%";
+        }
+      }, 5000);
+      return {
+        intervalId: interval,
+        finish: () => {
+          clearInterval(interval);
+          bar.style.width = "100%";
+          setTimeout(() => {
+            container.style.display = "none";
+            bar.style.width = "0%";
+          }, 500);
+        },
+      };
+    }
+
+    async function generateSite() {
+      const progress = startProgressBar();
+      try {
+        const res = await fetch("/api/ai-generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: userPrompt }),
+        });
+        const data = await res.json();
+
+        const htmlMatch = data.output.match(/```html([\s\S]*?)```/i);
+        const cssMatch = data.output.match(/```css([\s\S]*?)```/i);
+        const jsMatch = data.output.match(/```javascript([\s\S]*?)```/i);
+
+        const html = htmlMatch ? htmlMatch[1].trim() : "<h1>No HTML generated</h1>";
+        const css = cssMatch ? cssMatch[1].trim() : "";
+        const js = jsMatch ? jsMatch[1].trim() : "";
+
+        const iframe = document.getElementById("preview");
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        doc.open();
+        doc.write(html);
+        if (css) {
+          const style = document.createElement("style");
+          style.textContent = css;
+          doc.head.appendChild(style);
+        }
+        if (js) {
+          const script = document.createElement("script");
+          script.textContent = js;
+          doc.body.appendChild(script);
+        }
+        doc.close();
+        iframe.style.display = "block";
+        progress.finish();
+      } catch (err) {
+        console.error(err);
+        progress.finish();
+        alert("Failed to generate website.");
       }
-    }, 5000);
-    return {
-      intervalId: interval,
-      finish: () => {
-        clearInterval(interval);
-        bar.style.width = "100%";
-        setTimeout(() => {
-          container.style.display = "none";
-          bar.style.width = "0%";
-        }, 500);
-      },
+    }
+
+    generateSite();
+
+    // Chat input
+    document.getElementById("ai-chat-send").addEventListener("click", async () => {
+      const instruction = document.getElementById("ai-chat-input").value.trim();
+      if (!instruction) return;
+      const progress = startProgressBar();
+      try {
+        const res = await fetch("/api/ai-generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: `${userPrompt}\nApply this instruction: ${instruction}`,
+          }),
+        });
+        const data = await res.json();
+
+        const htmlMatch = data.output.match(/```html([\s\S]*?)```/i);
+        const cssMatch = data.output.match(/```css([\s\S]*?)```/i);
+        const jsMatch = data.output.match(/```javascript([\s\S]*?)```/i);
+
+        const html = htmlMatch ? htmlMatch[1].trim() : "<h1>No HTML generated</h1>";
+        const css = cssMatch ? cssMatch[1].trim() : "";
+        const js = jsMatch ? jsMatch[1].trim() : "";
+
+        const iframe = document.getElementById("preview");
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        doc.open();
+        doc.write(html);
+        if (css) {
+          const style = document.createElement("style");
+          style.textContent = css;
+          doc.head.appendChild(style);
+        }
+        if (js) {
+          const script = document.createElement("script");
+          script.textContent = js;
+          doc.body.appendChild(script);
+        }
+        doc.close();
+        progress.finish();
+      } catch (err) {
+        console.error(err);
+        progress.finish();
+        alert("Failed to update site.");
+      }
+    });
+
+    // Regenerate / Rename / Back buttons
+    document.getElementById("regenBtn").onclick = generateSite;
+    document.getElementById("renameBtn").onclick = () => {
+      const currentName = localStorage.getItem("ai-project-name") || userPrompt.substring(0, 20);
+      const newName = window.prompt("Enter new project name:", currentName);
+      if (newName && newName.trim() !== "") {
+        document.getElementById("projectName").textContent = newName.trim();
+        localStorage.setItem("ai-project-name", newName.trim());
+      }
     };
-  }
-
-  async function generateSite() {
-    const progress = startProgressBar();
-    try {
-      const res = await fetch("/api/ai-generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
-      });
-      const data = await res.json();
-
-      const htmlMatch = data.output.match(/```html([\s\S]*?)```/i);
-      const cssMatch = data.output.match(/```css([\s\S]*?)```/i);
-      const jsMatch = data.output.match(/```javascript([\s\S]*?)```/i);
-
-      const html = htmlMatch ? htmlMatch[1].trim() : "<h1>No HTML generated</h1>";
-      const css = cssMatch ? cssMatch[1].trim() : "";
-      const js = jsMatch ? jsMatch[1].trim() : "";
-
-      const iframe = document.getElementById("preview");
-      const doc = iframe.contentDocument || iframe.contentWindow.document;
-      doc.open();
-      doc.write(html);
-      if (css) {
-        const style = document.createElement("style");
-        style.textContent = css;
-        doc.head.appendChild(style);
-      }
-      if (js) {
-        const script = document.createElement("script");
-        script.textContent = js;
-        doc.body.appendChild(script);
-      }
-      doc.close();
-      iframe.style.display = "block";
-      progress.finish();
-    } catch (err) {
-      console.error(err);
-      progress.finish();
-      alert("Failed to generate website.");
-    }
-  }
-
-  generateSite();
-
-  // Chat input
-  document.getElementById("ai-chat-send").addEventListener("click", async () => {
-    const instruction = document.getElementById("ai-chat-input").value.trim();
-    if (!instruction) return;
-    const progress = startProgressBar();
-    try {
-      const res = await fetch("/api/ai-generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: `${prompt}\nApply this instruction: ${instruction}`,
-        }),
-      });
-      const data = await res.json();
-
-      const htmlMatch = data.output.match(/```html([\s\S]*?)```/i);
-      const cssMatch = data.output.match(/```css([\s\S]*?)```/i);
-      const jsMatch = data.output.match(/```javascript([\s\S]*?)```/i);
-
-      const html = htmlMatch ? htmlMatch[1].trim() : "<h1>No HTML generated</h1>";
-      const css = cssMatch ? cssMatch[1].trim() : "";
-      const js = jsMatch ? jsMatch[1].trim() : "";
-
-      const iframe = document.getElementById("preview");
-      const doc = iframe.contentDocument || iframe.contentWindow.document;
-      doc.open();
-      doc.write(html);
-      if (css) {
-        const style = document.createElement("style");
-        style.textContent = css;
-        doc.head.appendChild(style);
-      }
-      if (js) {
-        const script = document.createElement("script");
-        script.textContent = js;
-        doc.body.appendChild(script);
-      }
-      doc.close();
-      progress.finish();
-    } catch (err) {
-      console.error(err);
-      progress.finish();
-      alert("Failed to update site.");
-    }
-  });
-
-  // Regenerate / Rename buttons
-  document.getElementById("regenBtn").onclick = generateSite;
-  document.getElementById("renameBtn").onclick = () => {
-    const currentName = localStorage.getItem("ai-project-name") || prompt.substring(0, 20);
-    const newName = prompt("Enter new project name:", currentName);
-    if (newName && newName.trim() !== "") {
-      document.getElementById("projectName").textContent = newName.trim();
-      localStorage.setItem("ai-project-name", newName.trim());
-    }
-  };
-</script>
+    document.getElementById("backBtn").onclick = () => {
+      window.location.href = "index.html";
+    };
+  </script>
 
 </body>
 </html>
