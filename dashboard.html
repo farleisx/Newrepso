@@ -89,13 +89,33 @@
   function startProgressBar(){
     const container = document.getElementById("progress-container");
     const bar = document.getElementById("progress-bar");
-    container.style.display="block"; bar.style.width="0%";
+    container.style.display="block";
+    bar.style.width="0%";
     let progress=0;
     const interval=setInterval(()=>{
-      if(progress<95){ progress+=5; bar.style.width=progress+"%"; }
+      if(progress<95){
+        progress+=5;
+        bar.style.width=progress+"%";
+      }
     },5000);
-    return { intervalId:interval, finish:()=>{ clearInterval(interval); bar.style.width="100%";
-      setTimeout(()=>{ container.style.display="none"; bar.style.width="0%"; },500); }};
+    return {
+      intervalId: interval,
+      finish: ()=>{
+        clearInterval(interval);
+        // smooth animation from current to 100%
+        let current=parseFloat(bar.style.width);
+        const step=1;
+        const anim=setInterval(()=>{
+          if(current<100){
+            current+=step;
+            bar.style.width=current+"%";
+          } else {
+            clearInterval(anim);
+            setTimeout(()=>{ container.style.display="none"; bar.style.width="0%"; },500);
+          }
+        },10); // 10ms step for smoothness
+      }
+    };
   }
 
   async function generateSite(){
