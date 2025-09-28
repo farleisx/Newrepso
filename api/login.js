@@ -18,7 +18,7 @@ export default async function handler(req, res) {
 
     res.status(200).json({ message: 'Login successful' })
   } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Internal server error' }) // always returns JSON
+    console.error('Login error:', err)
+    res.status(500).json({ error: 'Internal server error' })
   }
 }
