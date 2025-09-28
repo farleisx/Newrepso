@@ -1,16 +1,10 @@
 export default async function handler(req, res) {
-  res.setHeader('Content-Type', 'application/json') // always JSON
-
+  res.setHeader('Content-Type', 'application/json')
   try {
     const { createClient } = await import('@supabase/supabase-js')
-
     const supabaseUrl = process.env.SUPABASE_URL
     const supabaseKey = process.env.SUPABASE_KEY
-
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Missing Supabase environment variables')
-    }
-
+    if (!supabaseUrl || !supabaseKey) throw new Error('Missing Supabase env vars')
     const supabase = createClient(supabaseUrl, supabaseKey)
 
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
