@@ -1,19 +1,24 @@
-import { supabase } from '../../lib/supabase'
-
 export default async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json') // always JSON
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' })
-  }
-
   try {
-    const { username, password } = req.body
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Missing username or password' })
+    // Import Supabase dynamically
+    const { createClient } = await import('@supabase/supabase-js')
+
+    const supabaseUrl = process.env.SUPABASE_URL
+    const supabaseKey = process.env.SUPABASE_KEY
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing Supabase environment variables')
     }
 
-    // Attempt login
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+
+    const { username, password } = req.body
+    if (!username || !password) return res.status(400).json({ error: 'Missing username or password' })
+
     const { data, error } = await supabase
       .from('users')
       .select('*')
