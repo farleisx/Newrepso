@@ -13,7 +13,6 @@
     height: 100vh;
     background: #f7f9fc;
   }
-
   .login-container {
     background: #fff;
     padding: 40px;
@@ -24,14 +23,12 @@
     flex-direction: column;
     gap: 15px;
   }
-
   input {
     padding: 10px;
     border-radius: 8px;
     border: 1px solid #ccc;
     width: 100%;
   }
-
   button {
     padding: 10px;
     border: none;
@@ -40,18 +37,14 @@
     color: #fff;
     cursor: pointer;
   }
-
   button:hover { background: #073073; }
-
   #error-msg { color: red; margin-top: 10px; }
   #success-msg { color: green; margin-top: 10px; }
-
   .password-wrapper {
     position: relative;
     display: flex;
     align-items: center;
   }
-
   .password-wrapper button {
     position: absolute;
     right: 5px;
@@ -93,13 +86,31 @@ toggleBtn.addEventListener("click", () => {
   }
 })
 
-// Keep user logged in (localStorage)
-const loggedInUser = localStorage.getItem("ai-user")
-if (loggedInUser) {
-  successDiv.textContent = `Welcome back, ${loggedInUser}! Redirecting...`
-  setTimeout(() => { window.location.href = "dashboard.html" }, 1500)
-}
+// Check if user is already logged in
+async function checkSession() {
+  const username = localStorage.getItem("ai-user")
+  if (!username) return
 
+  try {
+    const res = await fetch("/api/check-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username })
+    })
+    const data = await res.json()
+    if (res.ok) {
+      successDiv.textContent = `Welcome back, ${username}! Redirecting...`
+      setTimeout(() => { window.location.href = "dashboard.html" }, 1000)
+    } else {
+      localStorage.removeItem("ai-user")
+    }
+  } catch {
+    localStorage.removeItem("ai-user")
+  }
+}
+checkSession()
+
+// Login / Signup
 document.getElementById("loginBtn").addEventListener("click", async () => {
   const username = document.getElementById("username").value.trim()
   const password = passwordInput.value.trim()
