@@ -5,30 +5,106 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login / Signup</title>
 <style>
-  body { font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f7f9fc; }
-  .login-container { background: #fff; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 300px; display: flex; flex-direction: column; gap: 15px; }
-  input { padding: 10px; border-radius: 8px; border: 1px solid #ccc; width: 100%; }
-  button { padding: 10px; border: none; border-radius: 8px; background: #0b3d91; color: #fff; cursor: pointer; }
+  body {
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: #f7f9fc;
+  }
+
+  .login-container {
+    background: #fff;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  input {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    width: 100%;
+  }
+
+  button {
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: #0b3d91;
+    color: #fff;
+    cursor: pointer;
+  }
+
   button:hover { background: #073073; }
+
   #error-msg { color: red; margin-top: 10px; }
+  #success-msg { color: green; margin-top: 10px; }
+
+  .password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .password-wrapper button {
+    position: absolute;
+    right: 5px;
+    padding: 5px 10px;
+    background: #ccc;
+    color: #000;
+    border-radius: 5px;
+    font-size: 12px;
+  }
 </style>
 </head>
 <body>
 <div class="login-container">
   <h2>Login / Signup</h2>
   <input type="text" id="username" placeholder="Username">
-  <input type="password" id="password" placeholder="Password">
+  <div class="password-wrapper">
+    <input type="password" id="password" placeholder="Password">
+    <button type="button" id="togglePwd">Show</button>
+  </div>
   <button id="loginBtn">Login / Signup</button>
   <div id="error-msg"></div>
+  <div id="success-msg"></div>
 </div>
 
 <script>
 const errorDiv = document.getElementById("error-msg")
+const successDiv = document.getElementById("success-msg")
+const toggleBtn = document.getElementById("togglePwd")
+const passwordInput = document.getElementById("password")
+
+// Toggle password visibility
+toggleBtn.addEventListener("click", () => {
+  if (passwordInput.type === "password") {
+    passwordInput.type = "text"
+    toggleBtn.textContent = "Hide"
+  } else {
+    passwordInput.type = "password"
+    toggleBtn.textContent = "Show"
+  }
+})
+
+// Keep user logged in (localStorage)
+const loggedInUser = localStorage.getItem("ai-user")
+if (loggedInUser) {
+  successDiv.textContent = `Welcome back, ${loggedInUser}! Redirecting...`
+  setTimeout(() => { window.location.href = "dashboard.html" }, 1500)
+}
 
 document.getElementById("loginBtn").addEventListener("click", async () => {
   const username = document.getElementById("username").value.trim()
-  const password = document.getElementById("password").value.trim()
+  const password = passwordInput.value.trim()
   errorDiv.textContent = ""
+  successDiv.textContent = ""
 
   if (!username || !password) {
     errorDiv.textContent = "Please enter both username and password."
@@ -46,7 +122,8 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
 
     if (res.ok) {
       localStorage.setItem("ai-user", username)
-      window.location.href = "dashboard.html"
+      successDiv.textContent = "Login successful! Redirecting..."
+      setTimeout(() => { window.location.href = "dashboard.html" }, 1000)
       return
     }
 
@@ -60,7 +137,8 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
 
     if (signupRes.ok) {
       localStorage.setItem("ai-user", username)
-      window.location.href = "dashboard.html"
+      successDiv.textContent = "Account created! Redirecting..."
+      setTimeout(() => { window.location.href = "dashboard.html" }, 1000)
     } else {
       errorDiv.textContent = signupData.error || "Error creating account"
     }
