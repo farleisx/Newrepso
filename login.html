@@ -21,16 +21,42 @@
 </div>
 
 <script>
-  document.getElementById("loginBtn").addEventListener("click", () => {
-    const username = document.getElementById("username").value.trim();
-    const password = document.getElementById("password").value.trim();
-    if(!username || !password) { alert("Please enter both username and password."); return; }
+document.getElementById("loginBtn").addEventListener("click", async () => {
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value.trim();
 
-    localStorage.setItem("ai-user", username); // fake login
-    localStorage.setItem("ai-prompt", localStorage.getItem("ai-prompt-temp")); // pass prompt to dashboard
-    localStorage.removeItem("ai-prompt-temp");
-    window.location.href = "dashboard.html";
+  if (!username || !password) {
+    alert("Please enter both username and password.");
+    return;
+  }
+
+  // Try login
+  const res = await fetch("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password })
   });
+
+  if (res.ok) {
+    localStorage.setItem("ai-user", username);
+    window.location.href = "dashboard.html";
+  } else {
+    // If login fails, try signup
+    const signup = await fetch("/api/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
+
+    if (signup.ok) {
+      localStorage.setItem("ai-user", username);
+      window.location.href = "dashboard.html";
+    } else {
+      const error = await signup.json();
+      alert(error.error || "Error creating account");
+    }
+  }
+});
 </script>
 </body>
 </html>
