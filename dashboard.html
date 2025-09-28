@@ -78,7 +78,7 @@
 <script>
   const user = localStorage.getItem("ai-user");
   const prompt = localStorage.getItem("ai-prompt");
-  if(!user||!prompt) window.location.href="index.html";
+  if(!user || !prompt) window.location.href="index.html";
 
   const projectNameEl = document.getElementById("projectName");
   let storedName = localStorage.getItem("ai-project-name") || prompt.substring(0,20);
@@ -102,7 +102,6 @@
       intervalId: interval,
       finish: ()=>{
         clearInterval(interval);
-        // smooth animation from current to 100%
         let current=parseFloat(bar.style.width);
         const step=1;
         const anim=setInterval(()=>{
@@ -113,7 +112,7 @@
             clearInterval(anim);
             setTimeout(()=>{ container.style.display="none"; bar.style.width="0%"; },500);
           }
-        },10); // 10ms step for smoothness
+        },10);
       }
     };
   }
@@ -121,10 +120,13 @@
   async function generateSite(){
     const progress=startProgressBar();
     try{
-      const res=await fetch("/api/ai-generate",{method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({prompt})});
+      const res=await fetch("/api/ai-generate",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({prompt})
+      });
       const data=await res.json();
 
-      // parse all code blocks
       const regex = /```(\w+)[\s\S]*?```/gi;
       let match;
       codeData={};
@@ -171,16 +173,25 @@
 
   generateSite();
 
-  // Chat
+  // Chat (update existing project)
   document.getElementById("ai-chat-send").addEventListener("click", async ()=>{
     const instruction=document.getElementById("ai-chat-input").value.trim();
     if(!instruction) return;
     const progress=startProgressBar();
     try{
-      const res=await fetch("/api/ai-generate",{method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ prompt:`${prompt}\nApply this instruction: ${instruction}` })});
+      const res=await fetch("/api/ai-generate",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          prompt: instruction,
+          previousCode: codeData // send current code for modification
+        })
+      });
+
       const data=await res.json();
       const regex=/```(\w+)[\s\S]*?```/gi;
-      let match; codeData={};
+      let match;
+      codeData={};
       while((match=regex.exec(data.output))!==null){
         let lang=match[1].trim();
         codeData[lang]=match[0].replace(/```/g,'').trim();
@@ -204,7 +215,6 @@
     if(newName){ projectNameEl.textContent=newName; localStorage.setItem("ai-project-name", newName); renameModal.style.display="none"; }
   };
   document.getElementById("renameCancel").onclick=()=> renameModal.style.display="none";
-
 </script>
 </body>
 </html>
