@@ -1,17 +1,10 @@
 export default async function handler(req, res) {
-  res.setHeader('Content-Type', 'application/json') // always JSON
-
+  res.setHeader('Content-Type', 'application/json')
   try {
-    // Import Supabase dynamically
     const { createClient } = await import('@supabase/supabase-js')
-
     const supabaseUrl = process.env.SUPABASE_URL
     const supabaseKey = process.env.SUPABASE_KEY
-
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Missing Supabase environment variables')
-    }
-
+    if (!supabaseUrl || !supabaseKey) throw new Error('Missing Supabase env vars')
     const supabase = createClient(supabaseUrl, supabaseKey)
 
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
@@ -26,9 +19,7 @@ export default async function handler(req, res) {
       .eq('password', password)
       .single()
 
-    if (error || !data) {
-      return res.status(401).json({ error: error?.message || 'Invalid username or password' })
-    }
+    if (error || !data) return res.status(401).json({ error: error?.message || 'Invalid credentials' })
 
     res.status(200).json({ message: 'Login successful' })
 
