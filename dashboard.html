@@ -86,10 +86,18 @@
 
   let codeData = {}; // key: language, value: code
 
-  // Success ding sound (base64-encoded)
-  const successAudio = new Audio(
-    "data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAA... (shortened for example)"
-  );
+  // Success ding sound (from file)
+const successAudio = new Audio("assets/sounds/success.mp3");
+
+function playSuccess() {
+  try {
+    successAudio.currentTime = 0;
+    successAudio.play();
+  } catch (e) {
+    console.error("Failed to play success sound:", e);
+  }
+}
+
 
   function startProgressBar(){
     const container = document.getElementById("progress-container");
