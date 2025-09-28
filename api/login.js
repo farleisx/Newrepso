@@ -5,8 +5,9 @@ export default async function handler(req, res) {
 
   try {
     const { username, password } = req.body
-    if (!username || !password) return res.status(400).json({ error: 'Missing fields' })
+    if (!username || !password) return res.status(400).json({ error: 'Missing username or password' })
 
+    // Attempt to find user
     const { data, error } = await supabase
       .from('users')
       .select('*')
@@ -14,11 +15,11 @@ export default async function handler(req, res) {
       .eq('password', password)
       .single()
 
-    if (error || !data) return res.status(401).json({ error: 'Invalid credentials' })
+    if (error || !data) return res.status(401).json({ error: 'Invalid username or password' })
 
     res.status(200).json({ message: 'Login successful' })
   } catch (err) {
     console.error('Login error:', err)
-    res.status(500).json({ error: 'Internal server error' })
+    res.status(500).json({ error: err.message || 'Internal server error' })
   }
 }
