@@ -10,6 +10,7 @@
   input { padding: 10px; border-radius: 8px; border: 1px solid #ccc; width: 100%; }
   button { padding: 10px; border: none; border-radius: 8px; background: #0b3d91; color: #fff; cursor: pointer; }
   button:hover { background: #073073; }
+  #error-msg { color: red; margin-top: 10px; }
 </style>
 </head>
 <body>
@@ -18,25 +19,30 @@
   <input type="text" id="username" placeholder="Username">
   <input type="password" id="password" placeholder="Password">
   <button id="loginBtn">Login / Signup</button>
+  <div id="error-msg"></div>
 </div>
 
 <script>
+const errorDiv = document.getElementById("error-msg")
+
 document.getElementById("loginBtn").addEventListener("click", async () => {
   const username = document.getElementById("username").value.trim()
   const password = document.getElementById("password").value.trim()
+  errorDiv.textContent = ""
 
   if (!username || !password) {
-    alert("Please enter both username and password.")
+    errorDiv.textContent = "Please enter both username and password."
     return
   }
 
   try {
-    // Try login first
+    // Try login
     const res = await fetch("/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password })
     })
+    const data = await res.json()
 
     if (res.ok) {
       localStorage.setItem("ai-user", username)
@@ -45,22 +51,23 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
     }
 
     // If login fails, try signup
-    const signup = await fetch("/api/signup", {
+    const signupRes = await fetch("/api/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password })
     })
+    const signupData = await signupRes.json()
 
-    if (signup.ok) {
+    if (signupRes.ok) {
       localStorage.setItem("ai-user", username)
       window.location.href = "dashboard.html"
     } else {
-      const err = await signup.json()
-      alert(err.error || "Error creating account")
+      errorDiv.textContent = signupData.error || "Error creating account"
     }
+
   } catch (err) {
     console.error(err)
-    alert("Server error, please try again later")
+    errorDiv.textContent = "Server error: " + (err.message || "Try again later")
   }
 })
 </script>
