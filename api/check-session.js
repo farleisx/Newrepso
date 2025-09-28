@@ -1,6 +1,5 @@
 export default async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json')
-
   try {
     const { createClient } = await import('@supabase/supabase-js')
     const supabaseUrl = process.env.SUPABASE_URL
@@ -23,7 +22,7 @@ export default async function handler(req, res) {
 
     res.status(200).json({ message: 'Session valid', username: data.username })
   } catch (err) {
-    console.error(err)
+    console.error('Check-session error:', err)
     res.status(500).json({ error: err.message || 'Internal server error' })
   }
 }
